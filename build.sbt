@@ -11,7 +11,7 @@ lazy val root = (project in file(".")).
       crossPaths := false,
       autoScalaLibrary := false
     )),
-    name := "Hello",
+    name := "s4n-java-training",
     libraryDependencies ++= Seq(
       "junit" % "junit" % "4.12" % "test",
       "com.novocode" % "junit-interface" % "0.11" % "test"
