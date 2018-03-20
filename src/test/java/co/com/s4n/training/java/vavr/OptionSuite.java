@@ -2,12 +2,156 @@ package co.com.s4n.training.java.vavr;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+
+import io.vavr.PartialFunction;
+import io.vavr.control.Option;
+
+import static io.vavr.API.None;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import java.util.ArrayList;
+
+import static io.vavr.API.*;
+import static io.vavr.Patterns.$None;
+import static io.vavr.Patterns.$Some;
+
+import java.util.List;
+
+import static io.vavr.API.Some;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class OptionSuite {
 
     @Test
-    public void smokeTest() {
-        assertTrue(true);
+    public void testOptionMap(){
+        assertTrue("Pending test", true);
     }
+
+    /**
+     * Un option se puede filtar, y mostrar un some() o un none si no encuentra el resultado
+     */
+    @Test
+    public void testOptionWithFilter() {
+        Option<Integer> optionList = Option(3);
+        assertEquals("Does not Exist the filter",Some(3),optionList.filter(it -> it >= 3));
+        assertEquals("Does not Exist the filter",None(),optionList.filter(it -> it > 3));
+    }
+
+    /**
+     * Se puede hacer pattern matching a un option y comparar entre Some y None.
+     */
+    private String patternMatchSimple(Option<Integer> number) {
+        String result = Match(number).of(
+                Case($Some($()),"Existe"),
+                Case($None(),"Imaginario")
+        );
+        return result;
+    }
+    @Test
+    public void testOptionWithPatternMatching() {
+        Option<Integer> optionList = Option(1);
+        Option<Integer> optionList2 = None();
+
+        //Comparacion de Some o None()
+        assertEquals("Failure match optionList", "Existe", patternMatchSimple(optionList));
+        assertEquals("Failure match optionList2", "Imaginario", patternMatchSimple(optionList2));
+    }
+    /**
+     * el metodo peek aplica una funcion lambda o un metodo con el valor de Option cuando esta definido
+     * este metodo se usa para efectos colaterales y retorna el mismo Option que lo llamó
+     */
+    @Test
+    public void testPeekMethod(){
+        Option<String> defined_option = Option.of("Hello!");
+        /* Se debe utilizar una variable mutable para reflejar los efectos colaterales*/
+        final List<String> list = new ArrayList<>();
+        defined_option.peek(list::add); // the same as defined_option.peek(s -> list.add(s))
+        assertEquals("failed - peek did not return the same Option value",
+                Option.of("Hello!"),
+                defined_option);
+
+        assertEquals("failed - peek did not apply the side effect",
+                "Hello!",
+                list.get(0));
+    }
+
+    /**
+     * Un option se puede transformar dada una función
+     */
+    @Test
+    public void testOptionTransform() {
+        String textToCount = "Count this text";
+        Option<String> text = Option.of(textToCount);
+        Option<Integer> count = text.transform(s -> Option.of(s.getOrElse("DEFAULT").length()));
+        assertEquals("failure - Option was not transformed", Option.of(textToCount.length()), count);
+
+        Option<String> hello = Option.of("Hello");
+        Tuple2<String, String> result = hello.transform(s -> Tuple.of("OK", s.getOrElse("DEFAULT")));
+        assertEquals("failure - Option was not transformed", Tuple.of("OK", "Hello"), result);
+
+    }
+
+    /**
+     * el metodo getOrElse permite obtener el valor de un Option o un sustituto en caso de ser None
+     */
+    @Test
+    public void testGetOrElse(){
+        Option<String> defined_option = Option.of("Hello!");
+        Option<String> none = None();
+        assertEquals("failure - getOrElse did not get the current value of Option", "Hello!", defined_option.getOrElse("Goodbye!"));
+        assertEquals("failure - getOrElse did not replace None", "Goodbye!", none.getOrElse("Goodbye!"));
+    }
+
+    /**
+     * el metodo 'when' permite crear un Some(valor) o None utilizando condicionales booleanos
+     */
+    @Test
+    public void testWhenMethod(){
+        Option<String> valid = Option.when(true, "Good!");
+        Option<String> invalid = Option.when(false, "Bad!");
+        assertEquals("failed - the Option value must contain a Some('Good!')", Some("Good!"), valid);
+        assertEquals("failed - the Option value must contein a None because the condtion is false", None(), invalid);
+    }
+
+    @Test
+    public void testOptionCollect() {
+        final PartialFunction<Integer, String> pf = new PartialFunction<Integer, String>() {
+            @Override
+            public String apply(Integer i) {
+                return String.valueOf(i);
+            }
+
+            @Override
+            public boolean isDefinedAt(Integer i) {
+                return i % 2 == 1;
+            }
+        };
+        assertEquals("Failure, it returned Some() it should returned None()", None(),Option.of(2).collect(pf));
+        assertEquals("Failure, it returned Some() it should returned None()", None(),Option.<Integer>none().collect(pf));
+    }
+    /**
+     * En este test se prueba la funcionalidad para el manejo de Null en Option con FlatMap
+     */
+    @Test
+    public void testMananagementNull(){
+        Option<String> valor = Option.of("pepe");
+        Option<String> someN = valor.map(v -> null);
+        assertEquals("The option someN is Some(null)",someN.get(),null); /* Se valida que devuelve un Some null lo cual podria ocasionar en una Excepcion de JavanullPointerExcepcion*/
+        Option<String> buenUso = someN.flatMap(v -> Option.of(v)).map(x -> x.toUpperCase() +"Validacion");
+        assertEquals("The option is not defined because result is None",None(),buenUso);
+    }
+
+    /**
+     * En este test se prueba la funcionalidad para transformar un Option por medio de Map y flatMap
+     */
+    @Test
+    public void testMapAndFlatMapToOption() {
+        Option<String> myMap = Option.of("mi mapa");
+        Option<String> myResultMapOne = myMap.map(s -> s + " es bonito");
+        Option<String> myResultMapTwo = myMap.flatMap(s -> Option.of(s + " es bonito")).map(v -> v + " con flat map");
+        assertEquals("Transform Option with Map",Option.of("mi mapa es bonito"),myResultMapOne);
+        assertEquals("Transform Option with flatMap",Option.of("mi mapa es bonito con flat map"),myResultMapTwo);
+    }
+
 }

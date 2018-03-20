@@ -5,10 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class CompletableFutureSuite {
 
@@ -189,5 +186,92 @@ public class CompletableFutureSuite {
 
     }
 
+    @Test
+    public void t8(){
+
+        String testName = "t8";
+
+        CompletableFuture<String> completableFuture = CompletableFuture
+                .supplyAsync(() -> {
+                    System.out.println(testName + " - future corriendo en el thread: " + Thread.currentThread().getName());
+                    return "Hello";
+                })
+                .thenCompose(s -> {
+                    System.out.println(testName + " - compose corriendo en el thread: " + Thread.currentThread().getName());
+                    return CompletableFuture.supplyAsync(() ->{
+                        System.out.println(testName + " - CompletableFuture interno corriendo en el thread: " + Thread.currentThread().getName());
+                        return s + " World"  ;
+                    } );
+                });
+
+        try {
+            assertEquals("Hello World", completableFuture.get());
+        }catch(Exception e){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void t9(){
+
+        String testName = "t9";
+
+
+        // El segundo parametro de thenCombina es un BiFunction la cual sí tiene que tener retorno.
+        CompletableFuture<String> completableFuture = CompletableFuture
+                .supplyAsync(() -> "Hello")
+                .thenCombine(
+                        CompletableFuture.supplyAsync(() -> " World"),
+                        (s1, s2) -> s1 + s2
+                );
+
+        try {
+            assertEquals("Hello World", completableFuture.get());
+        }catch(Exception e){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void t10(){
+
+        String testName = "t10";
+
+        // El segundo parametro de thenAcceptBoth debe ser un BiConsumer. No puede tener retorno.
+        CompletableFuture future = CompletableFuture.supplyAsync(() -> "Hello")
+                .thenAcceptBoth(
+                        CompletableFuture.supplyAsync(() -> " World"),
+                        (s1, s2) -> System.out.println(testName + " corriendo en thread: "+Thread.currentThread().getName()+ " : " +s1 + s2));
+
+        try{
+            Object o = future.get();
+        }catch(Exception e){
+            assertTrue(false);
+
+        }
+    }
+
+    @Test
+    public void t11(){
+
+        String testName = "t11";
+
+        ExecutorService es = Executors.newFixedThreadPool(1);
+        CompletableFuture f = CompletableFuture.supplyAsync(()->"Hello",es);
+
+        f.supplyAsync(() -> "Hello")
+                .thenCombineAsync(
+                    CompletableFuture.supplyAsync(() -> {
+                        System.out.println(testName + " thenCombineAsync en Thread (1): " + Thread.currentThread().getName());
+                        return " World";
+                    }),
+                    (s1, s2) -> {
+                        System.out.println(testName + " thenCombineAsync en Thread (2): " + Thread.currentThread().getName());
+                        return s1 + s2;
+                    },
+                    es
+                );
+
+    }
 
 }
