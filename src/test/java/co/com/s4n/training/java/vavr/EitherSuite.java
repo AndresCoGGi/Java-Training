@@ -1,7 +1,6 @@
 package co.com.s4n.training.java.vavr;
 
 import io.vavr.Function1;
-import io.vavr.Function2;
 import io.vavr.control.Either;
 import org.junit.Test;
 
@@ -9,7 +8,6 @@ import static io.vavr.API.Left;
 import static io.vavr.API.None;
 import static io.vavr.API.Right;
 
-import io.vavr.collection.List;
 import java.util.function.Consumer;
 import java.io.Serializable;
 import static org.junit.Assert.assertArrayEquals;
@@ -45,14 +43,14 @@ public class EitherSuite {
      */
     @Test
     public void testProjection(){
-        Either<Integer,Integer> value = Either.right(5);
-        Either<Integer,Integer> value2 = Either.left(5);
+        Either<Integer,Integer> e1 = Either.right(5);
+        Either<Integer,Integer> e2 = Either.left(5);
 
         //El Either por defecto cuando se usa el map opera con el lado derecho.
-        assertEquals("Failure - Right projection", Right(10), value.map(it -> it + 5));
+        assertEquals("Failure - Right projection", Right(10), e1.map(it -> it + 5));
 
         //El Either para operar el lado izquierdo se debe usar un mapLeft.
-        assertEquals("Failure - Left Projection", Left(10), value2.mapLeft(it -> it + 5));
+        assertEquals("Failure - Left Projection", Left(10), e2.mapLeft(it -> it + 5));
     }
 
     /**
@@ -62,9 +60,13 @@ public class EitherSuite {
     @Test
     public void testEitherMap() {
         Either<String,Double> value = Either.right( 2.0 / 3);
-        assertEquals("Failure - Map in Right",Right(4.0),value.map(aDouble -> aDouble * 6));
+
+        assertEquals("Failure - Map in Right",
+                Right(4.0),
+                value.map(aDouble -> aDouble * 6));
 
         Either<String,Double> value2 = Either.left("Left side");
+
         assertEquals("Failure - the Either is not left",
                 Left("Left side"),
                 value2.map(aDouble -> aDouble * 6));
@@ -77,13 +79,18 @@ public class EitherSuite {
      */
     @Test
     public void testEitherFlatMap() {
-        Either<String,Double> value = Either.right( 2.0 / 3);
-        assertEquals("Failure - flatMap in Right",Right(4.0),value.flatMap(aDouble -> Right(aDouble * 6)));
 
-        Either<String,Double> value2 = Either.left("Left side");
+        Either<String,Double> e1 = Either.right( 2.0 / 3);
+
+        assertEquals("Failure - flatMap in Right",
+                Right(4.0),
+                e1.flatMap(aDouble -> Right(aDouble * 6)));
+
+        Either<String,Double> e2 = Either.left("Left side");
+
         assertEquals("Failure - the Either is not left",
                 Left("Left side"),
-                value2.flatMap(aDouble -> Right(aDouble * 6)));
+                e2.flatMap(aDouble -> Right(aDouble * 6)));
 
     }
 
@@ -92,8 +99,12 @@ public class EitherSuite {
      */
     @Test
     public void testEitherFilter() {
+
         Either<String,Integer> value = Either.right(7);
-        assertEquals("value is even",None(),value.filter(it -> it % 2 == 0));
+
+        assertEquals("value is even",
+                None(),
+                value.filter(it -> it % 2 == 0));
     }
 
     /**
@@ -149,23 +160,28 @@ public class EitherSuite {
      */
     @Test
     public void peekToEither() {
+
         final String[] valor = {"default"};
-        Either<String,String> myEitherR = Either.right("String");
-        Either<String,String> myEitherL = Either.left("pedroperez");
+        Either<String,String> myEitherR = Either.right("123456");
+        Either<String,String> myEitherL = Either.left("1234567");
+
         Consumer<String> myConsumer = element -> {
             if(element.length()>6){
-                valor[0] = "Right";
+                valor[0] = "foo";
             }
             else {
-                valor[0] = "Left";
+                valor[0] = "bar";
             }
         };
+
         myEitherL.peek(myConsumer);
         assertEquals("Validete Either with peek","default", valor[0]);
+
         myEitherR.peek(myConsumer);
-        assertEquals("Validete Either with peek","Left", valor[0]);
+        assertEquals("Validete Either with peek","bar", valor[0]);
+
         myEitherL.peekLeft(myConsumer);
-        assertEquals("Validete Either with peek","Right", valor[0]);
+        assertEquals("Validete Either with peek","foo", valor[0]);
     }
 
     /**
@@ -174,8 +190,10 @@ public class EitherSuite {
     @Test
     public void testPatternMatchingLeftSide(){
         Option<String> none = None();
+
         //toEither method transform Option<String> to String
         Either<String, String> left = none.toEither(() -> "Left from None value");
+
         String result = Match(left).of(
                 Case($Left($()), msg -> msg),
                 Case($(), "Not found")
