@@ -28,8 +28,19 @@ public class TrySuite {
     public void testTrytoSuccesAndFailure(){
         Try<Integer> myTrySuccess = Try.of(() -> 15 / 5 );
         Try<Integer> myTryFailure = Try.of(() -> 15 / 0 );
-        assertEquals("failed - the values is a Failure",Success(3),myTrySuccess);
-        assertTrue("failed - the values is a Failure",myTryFailure.isFailure());
+
+        assertEquals("failed - the values is a Failure",
+                Success(3),
+                myTrySuccess);
+
+        assertTrue("failed - the values is a Failure",
+                myTryFailure.isFailure());
+    }
+
+    private String patternMyTry(Try<Integer> myTry) {
+        return Match(myTry).of(
+                Case($Success($()),"Este Try es exitoso"),
+                Case($Failure($()),"Este Try es fallido"));
     }
 
     /**
@@ -37,16 +48,22 @@ public class TrySuite {
      */
     @Test
     public void testTryToPatternMatching() {
+
         Try<Integer> myTrySuccess = Try.of(() -> 15 / 5 );
         Try<Integer> myTryFailure = Try.of(() -> 15 / 0 );
-        assertEquals("Failure match optionList", "Este Try es exitoso", patternMyTry(myTrySuccess));
-        assertEquals("Failure match optionList2", "Este Try es fallido", patternMyTry(myTryFailure));
+
+        assertEquals("Failure match optionList",
+                "Este Try es exitoso",
+                patternMyTry(myTrySuccess));
+
+        assertEquals("Failure match optionList2",
+                "Este Try es fallido",
+                patternMyTry(myTryFailure));
     }
 
-    private String patternMyTry(Try<Integer> myTry) {
-        return Match(myTry).of(
-                Case($Success($()),"Este Try es exitoso"),
-                Case($Failure($()),"Este Try es fallido"));
+    private Try<Integer> recoverMyTry(Integer a, Integer b) {
+        return Try.of(() -> a / b).recover(x -> Match(x).of(
+                Case($(instanceOf(Exception.class)), -1)));
     }
 
     /**
@@ -57,14 +74,17 @@ public class TrySuite {
 
         Try<Integer> myRecoverSuccess = recoverMyTry(15, 5);
         Try<Integer> myRecoverFailure = recoverMyTry(15, 0);
-        assertEquals("Failed - Error nor controlled", Success(3), myRecoverSuccess);
-        assertEquals("Failed - Error nor controlled", Success(-1), myRecoverFailure);
+
+        assertEquals("Failed - Error nor controlled",
+                Success(3),
+                myRecoverSuccess);
+
+        assertEquals("Failed - Error nor controlled",
+                Success(-1),
+                myRecoverFailure);
     }
 
-    private Try<Integer> recoverMyTry(Integer a, Integer b) {
-        return Try.of(() -> a / b).recover(x -> Match(x).of(
-                Case($(instanceOf(Exception.class)), -1)));
-    }
+
 
     /**
      * La funcionalidad AndThen usa el parametro de salida de la anterior funcion cómo
@@ -77,26 +97,12 @@ public class TrySuite {
                 .andThen(arr -> arr.add(30))
                 .andThen(arr -> arr.add(20))
                 .map(arr -> arr.get(1));
+
         assertEquals("Failure - it should return the value in the 1st position",
                 Try.success(30).toString(),
                 actual.toString());
     }
 
-    /**
-     * La funcionalidad AndThen usa el parametro de salida de la anterior funcion cómo
-     * parametro de entrada de la siguiente función.
-     */
-    @Test
-    public void testFailAndThen() {
-        Try<Integer> actual = Try.of(() -> new ArrayList<Integer>())
-                .andThen(arr -> arr.add(10))
-                .andThen(arr -> arr.add(30))
-                .andThen(arr -> arr.add(20))
-                .map(arr -> arr.get(1));
-        assertEquals("Failure - it should return the value in the 1st position",
-                Try.success(30).toString(),
-                actual.toString());
-    }
 
     /**
      * La funcionalidad transform permite aplicar una modificación
@@ -128,10 +134,15 @@ public class TrySuite {
     @Test
     public void testFlatMapOnSuccess() {
         CheckedFunction2<Integer, Integer, Integer> divide = (dividend, divisor) -> dividend / divisor;
+
         Try<Integer> result = Try.of(() -> divide.apply(3, 1));
-        Function1<Try<Integer>, Try<Integer>> mapper = try_var -> try_var.flatMap(i -> Try.of(() -> i * 10))
+
+        Function1<Try<Integer>, Try<Integer>> mapper = try_var -> try_var
+                .flatMap(i -> Try.of(() -> i * 10))
                 .flatMap(i_10 -> Try.of(() -> i_10 * 10));
+
         Try<Integer> success_example = mapper.apply(result);
+
         assertEquals("failed - flatMap on success try case wasn't working as expected",
                 Try.of(() -> 300),
                 success_example);

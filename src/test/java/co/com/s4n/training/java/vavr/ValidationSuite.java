@@ -17,7 +17,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ValidationSuite
 {
-    public static class TestValidation {
+    class TestValidation {
 
         public String name;
         public Integer age;
@@ -46,7 +46,7 @@ public class ValidationSuite
         }
     }
 
-    public static class MyClass {
+    class MyClass {
         public String age;
         public String amount;
 
@@ -55,16 +55,6 @@ public class ValidationSuite
             this.age = age;
         }}
 
-    /**
-     * Se valida el uso de la funcion ap para crear la instancia de una clase en caso de ser validos los parametros del constructor
-     */
-    @Test
-    public void testValidationToAp() {
-        Validation<Seq<String>, MyClass> myValidation=  Validation.combine(validateAge(15),validateAmount(15000)).ap(MyClass::new);
-        Validation<Seq<String>, MyClass> myInvalidation=  Validation.combine(validateAge(13),validateAmount(15000)).ap(MyClass::new);
-        assertTrue("ap should be valid",myValidation.isValid());
-        assertTrue("ap should be invalid",myInvalidation.isInvalid());
-    }
 
     private Validation<String, String> validateAge(Integer age) {
         if(age<14)return Validation.invalid("Age must be at least " + 14);
@@ -72,8 +62,81 @@ public class ValidationSuite
     }
 
     private Validation<String, String> validateAmount(Integer monto) {
-        if (monto < 14000) return Validation.invalid("Amount must be at least " + 14);
+        if (monto < 14000) return Validation.invalid("Amount must be at least " + 1400);
         else return Validation.valid(monto.toString());
+    }
+
+    /**
+     * Validation con los dos casos válidos. Se ejecuta satisfactoriamente la lambda entregada a ap
+     */
+
+    @Test
+    public void testValidation1() {
+
+        Validation<Seq<String>, MyClass> res =  Validation
+                .combine(validateAge(15),
+                        validateAmount(15000))
+                .ap(MyClass::new);
+
+        MyClass myClass = res.get();
+
+        assertTrue("ap should be valid",res.isValid());
+        assertEquals("La edad debe ser 15 en la clase instanciada ", myClass.age, "15");
+
+    }
+
+    /**
+     * Validation con un solo caso exitoso y el otro fallido. No se debe ejecutar la lambda entregada a ap
+     * y sin embargo todas las funciones se deben ejecutar.
+     */
+
+    @Test(expected = java.util.NoSuchElementException.class)
+    public void testValidation2() {
+
+        Validation<Seq<String>, MyClass> res=  Validation
+                .combine(validateAge(13),
+                        validateAmount(15000))
+                .ap(MyClass::new);
+
+        // Este acceso es inseguro porque no se sabe si fue valid o invalid.
+        // en este caso esto lanza una excepción. Esto significa que el accesor get sobre un Validation es INSEGURO!
+        MyClass myClass = res.get();
+
+        assertTrue("ap should be invalid",res.isInvalid());
+    }
+
+    public void testValidation3() {
+
+        Validation<Seq<String>, MyClass> res=  Validation
+                .combine(validateAge(13),
+                        validateAmount(15000))
+                .ap(MyClass::new);
+
+        Integer fold = res.fold(s -> 1, c -> 2);
+
+        assertTrue("ap should be invalid",res.isInvalid());
+        assertEquals(fold.intValue(), 1);
+    }
+
+    @Test
+    public void testValidation4() {
+
+        Validation<Seq<String>, MyClass> res=  Validation
+                .combine(validateAge(13),
+                        validateAmount(10000))
+                .ap(MyClass::new);
+
+
+                res.fold(
+                        s -> {
+                            assertTrue(s.size()==2);
+                            assertTrue(s.contains("Age must be at least " + 14));
+                            assertTrue(s.contains("Amount must be at least " + 1400));
+                            return s.size();
+                        },
+                        
+                        c -> 2);
+
     }
 
     /**
@@ -81,13 +144,18 @@ public class ValidationSuite
      */
     @Test
     public void testCombineWithAnInvalid(){
+
         Validation<Error,String> valid = Validation.valid("Lets");
         Validation<Error,String> valid2 = Validation.valid("Go!");
         Validation<Error, String> invalid = Validation.invalid(new Error("Stop!"));
+
         Validation<Seq<Error>, String> finalValidation = Validation.combine(valid, invalid , valid2).ap((v1,v2,v3) -> v1 + v2 + v3);
+
         assertEquals("Failure - Combine with an invalid Validation didn't return the error",
                 "Stop!",
-                finalValidation.getError().get(0).getMessage()); //Validation.Invalid -> List<Error> -> Error -> String
+                finalValidation.getError().get(0).getMessage());
+
+        // Cambialo para que verifiques con fold! :D
     }
 
     /**
@@ -95,10 +163,15 @@ public class ValidationSuite
      */
     @Test
     public void testCombineValid() {
+
         Validation<Error, String> valid = Validation.valid("Lets");
         Validation<Error, String> valid2 = Validation.valid(" Go");
         Validation<Error, String> valid3 = Validation.valid("!");
-        Validation<Seq<Error>, String> finalValidation = Validation.combine(valid, valid2, valid3).ap((v1, v2, v3) -> v1 + v2 + v3);
+
+        Validation<Seq<Error>, String> finalValidation = Validation
+                .combine(valid, valid2, valid3)
+                .ap((v1, v2, v3) -> v1 + v2 + v3);
+
         assertEquals("Failure - Combine validation doesn't apply the correspond function with the values",
                 "Lets Go!",
                 finalValidation.get());
@@ -125,12 +198,16 @@ public class ValidationSuite
      */
     @Test
     public void testInvalidValidator() {
+
         final Integer UPPER_BOUND = 100;
         final Integer LOWER_BOUND = 5;
+
         Integer value = 500;
+
         Validation<String, Integer> validateBound = (value < UPPER_BOUND && value > LOWER_BOUND)
                 ? Validation.valid(value)
                 : Validation.invalid("The value is out of the defined bounds");
+
         assertTrue("The validator was successful", validateBound.isInvalid());
     }
 
@@ -139,9 +216,11 @@ public class ValidationSuite
      */
     @Test
     public void testBuilder8() {
+
         Validation<String, String> v1 = Validation.valid("John Doe");
         Validation<String, Integer> v2 = Validation.valid(39);
         Validation<String, Option<String>> v3 = Validation.valid(Option.of("address"));
+
         Validation<String, String> v4 = Validation.valid("111-111-1111");
         Validation<String, String> v5 = Validation.valid("alt1");
         Validation<String, String> v6 = Validation.valid("alt2");
@@ -150,6 +229,7 @@ public class ValidationSuite
 
         Validation.Builder8<String, String, Integer, Option<String>, String, String, String, String, String> result8 =
                 Validation.combine(v1,v2,v3,v4,v5,v6,v7,v8);
+
         assertEquals("Failure - ",
                 "Valid(John Doe,39,address,111-111-1111,alt1,alt2,alt3,alt4)",
                 result8.ap(TestValidation::new).toString());
@@ -182,21 +262,28 @@ public class ValidationSuite
      */
     @Test
     public void testValidatorFlatMap() {
+
         Validation<Error,Integer> validatorValid = Validation.valid(18);
         Validation<Error,String> validatorInvalid = Validation.invalid(new Error("Alert!"));
-        Function1<Integer,Validation<Error,String>> ageValidator = (Function1<Integer, Validation<Error, String>>) integer -> {
-            if (integer > 17) {
+
+        Function1<Integer,Validation<Error,String>> ageValidator =  i -> {
+            if (i > 17) {
                 return Validation.valid("he is an adult");
             } else {
                 return Validation.invalid(new Error("Upps!, he is not an adult"));
             }
         };
 
-        assertEquals("Failure - return some invalid",Validation.valid("18 this is part of flatmap"),
+        assertEquals("Failure - return some invalid",
+                Validation.valid("18 this is part of flatmap"),
                 validatorValid.flatMap(s -> Validation.valid(s + " this is part of flatmap")));
-        assertEquals("Failure - someone is younger",Validation.valid("he is an adult"),
+
+        assertEquals("Failure - someone is younger",
+                Validation.valid("he is an adult"),
                 validatorValid.flatMap(s -> ageValidator.apply(s)));
-        assertEquals("Failure - the flatmap is Valid",Validation.invalid(new Error("Alert!")).toString(),
+
+        assertEquals("Failure - the flatmap is Valid",
+                Validation.invalid(new Error("Alert!")).toString(),
                 validatorInvalid.flatMap(s -> Validation.valid(s + "invalid flatmap")).toString());
     }
 

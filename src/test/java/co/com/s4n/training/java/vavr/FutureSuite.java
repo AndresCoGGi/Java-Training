@@ -417,12 +417,22 @@ public class FutureSuite {
      */
     @Test
     public void testFuturePatternMatchingError() {
-        Future<String> future = Future.of(() -> {throw new Error("Failure");});
+
+        Future<String> future = Future.of(() -> {
+            throw new Error("Failure");
+        });
+
+        // Este test algunas veces tiene exito y algunas otras fracasa
+        // Por que sera?
+
         String result = Match(future).of(
                 Case($Future($Some($Failure($()))), "Failure!"),
                 Case($Future($()), "Success!"),
                 Case($(), "Double failure"));
-        assertEquals("Failure - The future should be a success", "Failure!", result);
+
+        assertEquals("Failure - The future should be a success",
+                "Failure!",
+                result);
     }
 
     /**
