@@ -63,14 +63,6 @@ public class StreamsSuite {
 
     }
 
-    @Test
-    public void testStreams5(){
-        OptionalInt first = IntStream.range(1, 4)
-                .findFirst();
-
-        assertEquals(1,first.orElseGet(()->666));
-
-    }
 
     @Test
     public void testStreams6(){
