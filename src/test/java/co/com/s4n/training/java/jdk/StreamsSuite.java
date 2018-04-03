@@ -2,7 +2,7 @@ package co.com.s4n.training.java.jdk;
 
 import static org.junit.Assert.*;
 
-import co.com.s4n.training.java.MyClass;
+import co.com.s4n.training.java.*;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -117,6 +117,10 @@ public class StreamsSuite {
                 this.i = i;
             }
 
+            public MyClass(Integer i){
+                this.i = i.intValue();
+            }
+
             @Override
             public String toString(){
                 return String.valueOf(i);
@@ -131,6 +135,22 @@ public class StreamsSuite {
 
         List<MyClass> nuevaLista = Stream.of(1, 2, 0, 3, 4)
                 .map(x -> new MyClass(x.intValue()))
+                .collect(Collectors.toList());
+
+
+        assertTrue(nuevaLista.size()==5);
+        assertTrue(nuevaLista.get(0).toString().equals("1"));
+
+    }
+
+    @Test
+    public void stramsContienenObjetos3(){
+
+
+        // Esta conversion no funciona :(
+        List<MyClassWithInt> nuevaLista = Stream
+                .of(1, 2, 0, 3, 4)
+                .map(MyClassWithInt::new)
                 .collect(Collectors.toList());
 
 
@@ -334,9 +354,19 @@ public class StreamsSuite {
         assertTrue(collect.size()==8);
 
     }
+
+    @Test
+    public void collectingPersons(){
+        Stream<CollectablePerson> personas = Stream.of(new CollectablePerson("Juan", 10), new CollectablePerson("Felipe", 20));
+
+        CollectablePerson persona = personas.collect(new PersonCollector());
+
+        System.out.println("persona:" + persona.name);
+    }
     //Reduce
     //ParalellStreams
     //https://dzone.com/articles/think-twice-using-java-8
+
 
 
 
