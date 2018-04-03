@@ -2,11 +2,13 @@ package co.com.s4n.training.java.jdk;
 
 import static org.junit.Assert.*;
 
+import co.com.s4n.training.java.MyClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -105,6 +107,52 @@ public class StreamsSuite {
 
         assertEquals(collect.size(),3);
         assertTrue(collect.contains("a2"));
+    }
+
+    @Test
+    public void stramsContienenObjetos(){
+        class MyClass{
+            int i;
+            public MyClass(int i){
+                this.i = i;
+            }
+
+            @Override
+            public String toString(){
+                return String.valueOf(i);
+            }
+        }
+
+        // Esta conversion no funciona :(
+        /*
+        List<MyClass> nuevaLista = Stream.of(1, 2, 0, 3, 4).map(MyClass::new)
+                .collect(Collectors.toList());
+        */
+
+        List<MyClass> nuevaLista = Stream.of(1, 2, 0, 3, 4)
+                .map(x -> new MyClass(x.intValue()))
+                .collect(Collectors.toList());
+
+
+        assertTrue(nuevaLista.size()==5);
+        assertTrue(nuevaLista.get(0).toString().equals("1"));
+
+    }
+
+    @Test
+    public void stramsContienenObjetos2(){
+
+        // Qué súper vuelta hay que dar para lograr lo que queríamos :(
+
+        List<MyClass> nuevaLista = Stream.of(1, 2, 0, 3, 4)
+                .mapToInt(Integer::intValue)
+                .mapToObj(MyClass::new)
+                .collect(Collectors.toList());
+
+
+        assertTrue(nuevaLista.size()==5);
+        assertTrue(nuevaLista.get(0).toString().equals("1"));
+
     }
 
     @Test
