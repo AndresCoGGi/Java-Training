@@ -264,6 +264,8 @@ public class EitherSuite {
         return either;
     }
 
+
+
     /**
      * Aunque la documentación de fold either dice que el tipado de los mapper para cada proyección
      * debe ser igual, aún así, el compilador permite crear los mapper con tipos diferentes.

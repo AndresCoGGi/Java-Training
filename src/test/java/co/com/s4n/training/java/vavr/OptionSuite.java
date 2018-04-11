@@ -16,6 +16,7 @@ import static io.vavr.Patterns.$None;
 import static io.vavr.Patterns.$Some;
 
 import java.util.List;
+import java.util.Optional;
 
 import static io.vavr.API.Some;
 import static org.junit.Assert.assertEquals;
@@ -70,7 +71,10 @@ public class OptionSuite {
         Option<String> defined_option = Option.of("Hello!");
         /* Se debe utilizar una variable mutable para reflejar los efectos colaterales*/
         final List<String> list = new ArrayList<>();
-        defined_option.peek(list::add); // the same as defined_option.peek(s -> list.add(s))
+        Option<String> peek = defined_option.peek(list::add);// the same as defined_option.peek(s -> list.add(s))
+
+        System.out.println("peek: "+ peek);
+
         assertEquals("failed - peek did not return the same Option value",
                 Option.of("Hello!"),
                 defined_option);
@@ -191,4 +195,32 @@ public class OptionSuite {
                 myResultMapTwo);
     }
 
+    @Test
+    public void optionFromNull(){
+        Option<Object> of = Option.of(null);
+        assertEquals(of, None());
+    }
+
+    @Test
+    public void optionFromOptional(){
+        Optional optional = Optional.of(1);
+        Option option = Option.ofOptional(optional);
+    }
+
+    Option<Integer> esPar(int i){
+        return (i%2==0)?Some(i):None();
+    }
+
+    @Test
+    public void forCompEnOption1(){
+        Option<Integer> integers = For(esPar(2), d -> Option(d)).toOption();
+        assertEquals(integers,Some(2));
+    }
+
+    @Test
+    public void forCompEnOption2(){
+        Option<Integer> integers = For(esPar(2), d ->
+                                   For(esPar(4), c -> Option(d+c))).toOption();
+        assertEquals(integers,Some(6));
+    }
 }

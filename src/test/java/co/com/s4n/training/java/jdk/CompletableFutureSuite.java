@@ -115,6 +115,8 @@ public class CompletableFutureSuite {
 
         String testName = "t5";
 
+        System.out.println(testName + " - El test (hilo ppal) esta corriendo en: "+Thread.currentThread().getName());
+
         CompletableFuture<String> completableFuture
                 = CompletableFuture.supplyAsync(() -> {
             System.out.println(testName + " - completbleFuture corriendo en el thread: "+Thread.currentThread().getName());
