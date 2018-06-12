@@ -159,7 +159,34 @@ public class LambdaSuite {
 
         instancia.operarConConsumer(c1);
 
+    }
 
+
+    @FunctionalInterface
+    interface EjercicioInterface{
+        public Consumer<Integer> MetodoEjercicio(Supplier<Integer> s1,
+                                     Supplier<Integer> s2,
+                                     Supplier<Integer> s3);
+    }
+
+    @Test
+    public void testEjercicio(){
+       EjercicioInterface i = (x,y,z) -> {
+          Integer partial = x.get() + y.get() + z.get();
+          Consumer<Integer> c = n -> {
+             Integer suma = partial.intValue() +n;
+              System.out.println("COnsumer ---->>"+suma);
+          };
+          return c;
+       };
+
+       Supplier x = () -> 1;
+       Supplier y = () -> 2;
+       Supplier z = () -> 3;
+
+       Consumer<Integer> consumer = i.MetodoEjercicio(x,y,z);
+
+       consumer.accept(new Integer(9));
     }
 
 }
