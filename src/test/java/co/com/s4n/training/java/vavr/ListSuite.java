@@ -12,7 +12,7 @@ import static org.junit.Assert.*;
 
 /**
  *  Getting started de la documentacion de vavr http://www.vavr.io/vavr-docs/#_collections
- *  Javadoc de vavr collections https://static.javadoc.io/io.vavr/vavr/0.9.0/io/vavr/collection/package-frame.html1
+ *  Javadoc de vavr collections https://static.javadoc.io/io.vavr/vavr/0.9.0/io/vavr/collection/package-frame.html
  */
 
 public class ListSuite {
@@ -24,7 +24,7 @@ public class ListSuite {
     public void testListOfNull() {
         List<String> list1 = List.of(null);
         list1.get();
-    }gi
+    }
 
     /**
      * Lo que sucede cuando se crea una lista vacía y se llama un método
@@ -90,6 +90,16 @@ public class ListSuite {
         assertEquals(list1, List.of(1,2,3));
 
     }
+
+
+    @Test
+    public void testFilter(){
+        List<Integer> list = List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        List<Integer> filteredList = list.filter(i -> i % 2 == 0);
+        assertTrue(filteredList.get(0)==2);
+
+    }
+
 
     /**
      * Se revisa el comportamiento cuando se pasa un iterador vacío
