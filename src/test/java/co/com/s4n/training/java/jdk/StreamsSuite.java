@@ -60,6 +60,8 @@ public class StreamsSuite {
 
     }
 
+
+    //Stream.of - stream
     @Test
     public void testStreams3(){
         Optional<String> first = Stream.of("a1", "a2", "a3")
@@ -69,6 +71,8 @@ public class StreamsSuite {
 
     }
 
+
+    //streams de enteros
     @Test
     public void testStreams4(){
         OptionalInt first = IntStream.range(1, 4)
@@ -78,6 +82,21 @@ public class StreamsSuite {
 
     }
 
+    //streams para volver coleccion
+    /*@Test
+    public void testStreamsEjemplo(){
+        IntStream myList =  IntStream.range(1, 4);
+
+        List<Integer> resCollect = myList.boxed().collect(Collectors.toList());
+
+
+        assertTrue(resCollect.contains(new Integer(1)));
+        assertTrue(resCollect.contains(new Integer(2)));
+        assertTrue(resCollect.contains(new Integer(3)));
+        assertFalse(resCollect.contains(new Integer(4)));
+
+    }*/
+
 
     @Test
     public void testStreams6(){
@@ -85,14 +104,18 @@ public class StreamsSuite {
                 .map(n -> 2 * n + 1)
                 .average();
 
+        //precision de 0D
         assertEquals(5D,average.orElseGet(()->666),0D);
 
     }
 
+
     @Test
     public void testStreams7(){
         OptionalInt max = Stream.of("a1", "a2", "a3")
+                //Sacar del elemento el numero
                 .map(s -> s.substring(1))
+                //convertir a entero primitivo
                 .mapToInt(Integer::parseInt)
                 .max();
 
@@ -192,6 +215,8 @@ public class StreamsSuite {
     public void testStreams10() {
 
         System.out.println("--------------- REVISA EL ORDEN DE LA SALIDA ----------------");
+
+        //todos los elemntos pasan por el stream
         Stream.of("d2", "a2", "b1", "b3", "c")
                 .filter(s -> {
                     System.out.println("filter: " + s);
@@ -204,14 +229,17 @@ public class StreamsSuite {
 
     @Test
     public void testStream11(){
-        // Cuántos elementos pasan por el stream?
+        // Cuántos elementos pasan por el stream ? solo dos
         boolean b = Stream.of("d2", "a2", "b1", "b3", "c")
                 .map(s -> {
+                    System.out.println("map"+s);
                     return s.toUpperCase();
                 })
                 .anyMatch(s -> {
+                    System.out.println("animatch"+s);
                     return s.startsWith("A");
                 });
+
 
         assertTrue(b);
 
@@ -219,6 +247,24 @@ public class StreamsSuite {
 
     @Test
     public void testStreams12(){
+        List<String> collect = Stream.of("d2", "a2", "b1", "b3", "c")
+                .filter(s -> {
+                    return s.startsWith("A");
+                })
+                //pasa todos por el filter pero no encuentra la A mayus
+                .map(s -> {
+                    return s.toUpperCase();
+                })
+
+                .collect(Collectors.toList());
+
+        assertTrue(collect.size()==0);
+        assertFalse(collect.contains("A2"));
+    }
+
+
+    @Test
+    public void testStreams13() {
         List<String> collect = Stream.of("d2", "a2", "b1", "b3", "c")
                 .map(s -> {
                     return s.toUpperCase();
@@ -231,13 +277,6 @@ public class StreamsSuite {
         assertTrue(collect.contains("A2"));
     }
 
-
-    @Test
-    public void testStreams13() {
-        //TODO: cambia el orden de map y filter
-        assertTrue(true);
-    }
-
     @Test(expected = java.lang.IllegalStateException.class)
     public void testStreams14() {
         Stream<String> stream =
@@ -247,6 +286,8 @@ public class StreamsSuite {
         boolean b = stream.anyMatch(s -> true);
         assertTrue(b);
 
+        //si devuelve String se puede seguir operando el stream
+        //el anymatch es un operacion final
         //Un stream no se puede volver a usar despues de haberse ejecutado una operacion final sobre el :(
         stream.noneMatch(s -> true);
     }
@@ -258,11 +299,12 @@ public class StreamsSuite {
                 () -> Stream.of("d2", "a2", "b1", "b3", "c")
                         .filter(s -> s.startsWith("a"));
 
+        //con el get obtenemos el String
         boolean b = streamSupplier.get().anyMatch(s -> true);
         boolean b1 = streamSupplier.get().noneMatch(s -> true);
 
-        assert(b);
-        assert(b1);
+        assertTrue(b);
+        assertFalse(b1);
 
     }
 
@@ -314,6 +356,8 @@ public class StreamsSuite {
                         .collect(Collectors.toList());
 
         assertTrue(filtered.size()==2);
+        assertTrue(filtered.contains(new Person("Peter", 23)));
+        //assertTrue(filtered.contains("Pamela"));
 
     }
 

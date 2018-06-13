@@ -23,7 +23,7 @@ public class CompletableFutureSuite {
         CompletableFuture<String> completableFuture
                 = new CompletableFuture<>();
 
-
+        //servicio ejecutor
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         executorService.submit(() -> {
@@ -32,9 +32,12 @@ public class CompletableFutureSuite {
             completableFuture.complete("Hello");
             return null;
         });
-            System.out.println(Thread.currentThread().getName());
+
+        //nombre del hilo
+        System.out.println(Thread.currentThread().getName());
 
         try {
+            //el get al futurecompletable solo se hace en codigo de pruebas
             String s = completableFuture.get(500, TimeUnit.MILLISECONDS);
             assertEquals(s, "Hello");
         }catch(Exception e){
@@ -66,6 +69,7 @@ public class CompletableFutureSuite {
         }catch(Exception e){
             assertTrue(false);
         }finally{
+            //dar de baja a la caja de hilos
             executorService.shutdown();
         }
     }
