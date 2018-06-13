@@ -44,6 +44,19 @@ public class LambdaSuite {
     }
 
     @Test
+    public void usarUnaInterfaceFuncionalMultiplicacion(){
+
+        InterfaceDeEjemplo i = (x,y)->x*y;
+
+        ClaseDeEjemplo instancia = new ClaseDeEjemplo();
+
+        int resultado = instancia.metodoDeEjemplo1(1,i);
+
+        assertTrue(resultado==3);
+    }
+
+
+    @Test
     public void usarUnaInterfaceFuncional2(){
 
         BiFunction<Integer, Integer, Integer> f = (x, y) -> new Integer(x.intValue()+y.intValue());
@@ -116,6 +129,24 @@ public class LambdaSuite {
         assertEquals("El int que me han entregado es: 4",resultado);
     }
 
+
+    //test que suma dos Supplier
+    @Test
+    public void usarUnaFuncionConSumarSupplier(){
+        Supplier a = () -> 4;
+        Supplier b = () -> 3;
+        Integer sum = (Integer) a.get() + (Integer) b.get();
+        Supplier suma = () -> sum;
+
+        ClaseDeEjemplo3 instancia = new ClaseDeEjemplo3();
+
+        //se usa el supplier de s2
+        String resultado = instancia.operarConSupplier(suma);
+
+        assertEquals("El int que me han entregado es: 7",resultado);
+    }
+
+
     class ClaseDeEjemplo4{
 
         private int i = 0;
@@ -125,8 +156,6 @@ public class LambdaSuite {
             c.accept(i);
         }
     }
-
-
 
     @Test
     public void usarUnaFuncionConConsumer(){
@@ -172,14 +201,17 @@ public class LambdaSuite {
     @Test
     public void testEjercicio(){
        EjercicioInterface i = (x,y,z) -> {
+
           Integer partial = x.get() + y.get() + z.get();
           Consumer<Integer> c = n -> {
              Integer suma = partial.intValue() +n;
-              System.out.println("COnsumer ---->>"+suma);
+             System.out.println("Consumer ---->>"+suma);
           };
-          return c;
+           return c;
+
        };
 
+       
        Supplier x = () -> 1;
        Supplier y = () -> 2;
        Supplier z = () -> 3;
