@@ -23,11 +23,16 @@ public class StreamsSuite {
     public void testStreams1(){
         List<String> myList = Arrays.asList("a1", "a2", "b1", "c2", "c1");
 
+        //converir coleccion a streams
         Stream<String> resultadoStream = myList
                 .stream()
+                //la s -> son los elementos
                 .filter(s -> s.startsWith("c"))
                 .map(String::toUpperCase)
+                //.map(s -> s.toUpperCase())
                 .sorted();
+
+        //convertir stream a coleccion
 
         List<String> resCollect = resultadoStream.collect(Collectors.toList());
 
@@ -43,6 +48,7 @@ public class StreamsSuite {
                                         .stream()
                                         .findFirst();
 
+        //compara con a1 lo primero de la lista y si no hay nada "NONE"
         assertEquals("a1",first.orElseGet(()->"NONE"));
 
     }

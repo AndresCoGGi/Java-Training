@@ -133,8 +133,10 @@ public class LambdaSuite {
     //test que suma dos Supplier
     @Test
     public void usarUnaFuncionConSumarSupplier(){
+
         Supplier a = () -> 4;
         Supplier b = () -> 3;
+
         Integer sum = (Integer) a.get() + (Integer) b.get();
         Supplier suma = () -> sum;
 
