@@ -47,6 +47,19 @@ public class StreamsSuite {
 
     }
 
+
+    @Test
+    public void testStreamsEjemplo(){
+        List<String> myList = new ArrayList<>();
+        Optional<String> first = myList
+                .stream()
+                .findFirst();
+
+        String res = first.orElseGet(()->"NONE");
+        assertEquals("NONE",res);
+
+    }
+
     @Test
     public void testStreams3(){
         Optional<String> first = Stream.of("a1", "a2", "a3")
