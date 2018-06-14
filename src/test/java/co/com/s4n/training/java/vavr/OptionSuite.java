@@ -25,6 +25,79 @@ import static org.junit.Assert.assertTrue;
 public class OptionSuite {
 
 
+    @Test
+    public void testConstruccion1(){
+        Option<Integer> o = Option(1);
+        assertTrue(o.isDefined());
+        assertEquals(o,Some(1));
+    }
+
+    @Test
+    public void testConstruccion2(){
+        Option<Integer> o = Option(null);
+        assertEquals(o,Option.none());
+    }
+
+    private Boolean esParPosibleNull(int i){
+
+        if (i%2 == 0){
+            return  new Boolean(true);
+        }else{
+            return null;
+        }
+
+
+    }
+
+    @Test
+    public void testConstruccion3(){
+        //OPtio agrega el efecto de la existencia
+        Option<Boolean> b = Option(esParPosibleNull(1));
+        assertEquals(b, Option.none());
+    }
+
+    private Integer identidadPosibleNull(int i){
+        if (i%2 == 0){
+            return new Integer(i);
+        }else{
+            return null;
+        }
+
+
+    }
+
+
+    @Test
+    public void testFIlter(){
+        //Option agrega el efecto de la existencia - Some o None
+        Option<Integer> b = Option(identidadPosibleNull(2));
+        Option<Integer> r = b.filter(x -> x.intValue()<4);
+        assertEquals(r.getOrElse(666).intValue(), 2);
+    }
+
+    @Test
+    public void testFIlterNone(){
+        //Option agrega el efecto de la existencia - Some o None
+        Option<Integer> b = Option(identidadPosibleNull(1));
+        Option<Integer> r = b.filter(x -> x.intValue()<4);
+        assertEquals(r, Option.none());
+    }
+
+    @Test
+    public void mapInOption(){
+        Option<Integer> o1 = Option(identidadPosibleNull(8));
+        Option<Integer> o2 = o1.map(x -> x-8);
+        assertEquals(o2,Some(0));
+    }
+
+    @Test
+    public void mapInOptionNone(){
+        Option<Integer> o1 = Option(identidadPosibleNull(3));
+        Option<Integer> o2 = o1.map(x -> x-8);
+        assertEquals(o2,Option.none());
+    }
+
+
     /**
      * Un option se puede filtar, y mostrar un some() o un none si no encuentra el resultado
      */
@@ -223,4 +296,67 @@ public class OptionSuite {
                                    For(esPar(4), c -> Option(d+c))).toOption();
         assertEquals(integers,Some(6));
     }
+
+    private Option<Integer> sumar(int a, int b){
+        System.out.println("Sumando "+a+"+"+b);
+        return Option.of(a+b);
+    }
+
+    private Option<Integer> restar(int a, int b){
+        System.out.println("Restando "+a+"-"+b);
+        return a-b>0 ? Option.of(a-b) : None();
+    }
+
+
+    @Test
+    public void flatMapInOption(){
+        Option<Integer> resultado =
+           sumar(1,1)
+                   .flatMap(a -> sumar(a,1)
+                      .flatMap(b -> sumar(b,1)
+                            .flatMap(c -> sumar(c,1)
+                                .flatMap(d -> sumar(d,1))
+                            )));
+           assertEquals(resultado.getOrElse(666).intValue(),6);
+    }
+
+    @Test
+    public void flatMapInOptionConNone(){
+        Option<Integer> resultado =
+                sumar(1,1)
+                        .flatMap(a -> sumar(a,1)
+                                .flatMap(b -> restar(b,4)
+                                        // el option devuelve none y none con flatMap da none,
+                                        // no ejecuta la lambda que sigue
+                                        .flatMap(c -> sumar(c,1)
+                                                .flatMap(d -> sumar(d,1))
+                                        )));
+        assertEquals(resultado.getOrElse(666).intValue(),666);
+    }
+
+    @Test
+    public void flatMapInOptionConFor(){
+
+        Option<Integer> res =
+            For(sumar(1,1),r1 ->
+                    For(sumar(r1,1),r2 ->
+                            For(sumar(r2,1),r3 ->
+
+              sumar(r3,r1)))).toOption();
+
+        assertEquals(res.getOrElse(666).intValue(),6);
+
+
+        /*Option<Integer> resultado =
+                sumar(1,1)
+                        .flatMap(a -> sumar(a,1)
+                                .flatMap(b -> restar(b,4)
+                                        // el option devuelve none y none con flatMap da none,
+                                        // no ejecuta la lambda que sigue
+                                        .flatMap(c -> sumar(c,1)
+                                                .flatMap(d -> sumar(d,1))
+                                        )));
+        assertEquals(resultado.getOrElse(666).intValue(),666);*/
+    }
+
 }
