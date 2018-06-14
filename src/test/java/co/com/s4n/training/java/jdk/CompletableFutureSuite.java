@@ -28,6 +28,18 @@ public class CompletableFutureSuite {
         System.out.println(sdf.format(date)+mensaje);
     }
 
+    public class persona {
+
+        String name;
+        int age;
+
+        public persona(String name, int age) {
+            this.name = name;
+            this.age = age;
+        }
+
+    }
+
     @Test
     public void t1() {
 
@@ -216,7 +228,8 @@ public class CompletableFutureSuite {
                     return CompletableFuture.supplyAsync(() ->{
                         System.out.println(testName + " - CompletableFuture interno corriendo en el thread: " + Thread.currentThread().getName());
                         return s + " World"  ;
-                    } );
+                    }
+                    );
                 });
 
         try {
@@ -227,6 +240,46 @@ public class CompletableFutureSuite {
     }
 
     @Test
+    public void t8Ejemplo(){
+
+        String testName = "t8Ejemplo";
+
+        CompletableFuture<persona> completableFuture = CompletableFuture
+                .supplyAsync(() -> {
+                    System.out.println(testName + " - future corriendo en el thread: " + Thread.currentThread().getName());
+                    return "Andres.24";
+                })
+                .thenCompose(s -> {
+
+                    System.out.println(testName + " - compose corriendo en el thread: " + Thread.currentThread().getName());
+                    return CompletableFuture.supplyAsync(() ->{
+                                System.out.println(testName + " - CompletableFuture interno corriendo en el thread: " + Thread.currentThread().getName());
+
+                                String[] name = s.split("\\.");
+                                String nombre = name[0];
+                                int edad = Integer.parseInt(name[1]);
+                                persona pers = new persona(nombre,edad);
+
+                                System.out.println("La personas es "+pers.name+" edad:"+pers.age);
+                                return pers;
+                            }
+                    );
+                });
+
+        try {
+            //el get solo se puede realizar una vez
+            persona futuro = completableFuture.get();
+
+            assertEquals("Andres", futuro.name);
+            assertEquals(24, futuro.age);
+        }catch(Exception e){
+            assertTrue(false);
+        }
+    }
+
+
+
+    @Test
     public void t9(){
 
         String testName = "t9";
@@ -234,11 +287,19 @@ public class CompletableFutureSuite {
 
         // El segundo parametro de thenCombina es un BiFunction la cual sí tiene que tener retorno.
         CompletableFuture<String> completableFuture = CompletableFuture
-                .supplyAsync(() -> "Hello")
+                .supplyAsync(() ->{
+                    System.out.println(testName + " - CompletableFuture corriendo en el thread: " + Thread.currentThread().getName());
+                    return "Hello ";
+                })
                 .thenCombine(
-                        CompletableFuture.supplyAsync(() -> " World"),
-                        (s1, s2) -> s1 + s2
-                );
+                        CompletableFuture.supplyAsync(() ->"World"),
+
+                        (s1, s2) ->{
+                            System.out.println(testName + " - lambdaCOmbinado corriendo en el thread: " + Thread.currentThread().getName());
+
+                            return s1 + s2;
+                        }
+                 );
 
         try {
             assertEquals("Hello World", completableFuture.get());
@@ -267,11 +328,43 @@ public class CompletableFutureSuite {
     }
 
     @Test
+    public void enlaceConSupplyAsync(){
+        ExecutorService es = Executors.newFixedThreadPool(1);
+
+        CompletableFuture f = CompletableFuture.supplyAsync(()->"Hello",es);
+
+        CompletableFuture<String> f2 = f.supplyAsync(()->{
+            imprimirMensaje("t11 Ejecutando a");
+            sleep(500);
+            return "a";
+        }).supplyAsync(()->{
+            imprimirMensaje("t11 Ejecutando b");
+            return "b";
+        });
+
+
+        try {
+            assertEquals(f2.get(),"b");
+        }catch (Exception e){
+            assertFalse(true);
+        }
+    }
+
+    @Test
+    public void enlaceConThenApplyAsync(){
+
+    }
+
+
+    @Test
     public void t11(){
 
+        //los hilos se deben decir el numero de hilos
         String testName = "t11";
 
+        //caja de hilos - con el numero de hilos (1)
         ExecutorService es = Executors.newFixedThreadPool(1);
+        //se le dice de que caja de hilos ,es
         CompletableFuture f = CompletableFuture.supplyAsync(()->"Hello",es);
 
         f.supplyAsync(() -> "Hello")
