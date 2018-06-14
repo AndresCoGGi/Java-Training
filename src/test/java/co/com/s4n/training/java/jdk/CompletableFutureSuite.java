@@ -353,6 +353,27 @@ public class CompletableFutureSuite {
     @Test
     public void enlaceConThenApplyAsync(){
 
+        String testName= "testTheAppyAsync";
+        ExecutorService es = Executors.newFixedThreadPool(4);
+
+        CompletableFuture futuro = CompletableFuture.supplyAsync(()->"Hello ",es);
+
+        CompletableFuture<String> f2 = futuro
+                .thenApplyAsync(s -> {
+                    imprimirMensaje(testName + " - ThenApplyAsinc en el thread (1): "+Thread.currentThread().getName());
+                    sleep(500);
+                    return s + "World";
+                },es)
+                .thenApplyAsync(s -> {
+                    imprimirMensaje(testName + " - ThenApplyAsinc en el thread: (2)"+Thread.currentThread().getName());
+
+                    return s + "!";
+                },es);
+        try {
+            assertEquals("Hello World!", f2.get());
+        }catch(Exception e){
+            assertTrue(false);
+        }
     }
 
 
@@ -379,6 +400,8 @@ public class CompletableFutureSuite {
                     },
                     es
                 );
+
+
 
     }
 
