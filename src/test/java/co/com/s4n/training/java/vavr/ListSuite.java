@@ -3,7 +3,11 @@ package co.com.s4n.training.java.vavr;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.collection.List;
+import io.vavr.control.Option;
 import org.junit.Test;
+
+import java.util.NoSuchElementException;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static io.vavr.collection.Iterator.empty;
@@ -20,6 +24,8 @@ public class ListSuite {
     /**
      * Lo que sucede cuando se intenta crear un lista de null
      */
+
+    //como construir unas lista de vavr
     @Test(expected = NullPointerException.class)
     public void testListOfNull() {
         List<String> list1 = List.of(null);
@@ -34,6 +40,26 @@ public class ListSuite {
         List<String> list = List.of();
         assertTrue("Failure - List should be empty",list.isEmpty());
         list.zip(empty());
+    }
+
+    @Test
+    public void testingZip(){
+        List<Integer> l1 = List.of(1,2,3);
+        List<Integer> l2 = List.of(1,2,3);
+        List<Tuple2<Integer, Integer>> zip = l1.zip(l2);
+        System.out.printf("zip"+zip);
+        assertEquals(zip.headOption().getOrElse(new Tuple2(0,0)),new Tuple2(1,1));
+    }
+
+    @Test
+    public void testingZipWithDiffSize(){
+        List<Integer> l1 = List.of(1,2,3,4);
+        List<Integer> l2 = List.of(1,2,3);
+
+        //solo hace zip con los que coincida
+        List<Tuple2<Integer, Integer>> zip = l1.zip(l2);
+        System.out.printf("zip"+zip);
+        assertEquals(zip.headOption().getOrElse(new Tuple2(0,0)),new Tuple2(1,1));
     }
 
     @Test
@@ -52,6 +78,34 @@ public class ListSuite {
     }
 
     @Test
+    public void testTailExample(){
+        List<Integer> list1 = List.of(1);
+
+        //valor esperado
+        List<Integer> expectedTail = List.of();
+
+        //lo que devuelve- el tail coge
+        // despues del segundo elemento
+        List<Integer> tail = list1.tail();
+        assertEquals(tail, expectedTail);
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void testHeadExample(){
+        List<Integer> list1 = List.of();
+        Integer head = list1.head();
+        assertEquals(head, new Integer(1));
+
+    }
+
+    @Test
+    public void testHeadOption(){
+        List<Integer> list1 = List.of(1,2,3,4);
+        Option<Integer> headoption = list1.headOption();
+        assertEquals(headoption.getOrElse(0),new Integer(1));
+    }
+
+    @Test
     public void testZip(){
         List<Integer> list1 = List.of(1,2,3);
         List<Integer> list2 = List.of(1,2,3);
@@ -61,7 +115,7 @@ public class ListSuite {
     }
 
     /**
-     * Una Lista es inmutable
+     * Una Lista es inmutable,no se puede convertir
      */
     @Test
     public void testListIsImmutable() {
@@ -84,6 +138,8 @@ public class ListSuite {
     public void testMap(){
 
         List<Integer> list1 = List.of(1, 2, 3);
+
+        //convierte de entero a String por medio de la funcion nameOfNumer
         List<String> list2 = list1.map(i -> nameOfNumer(i));
 
         assertEquals(list2, List.of("uno", "dos", "tres"));
@@ -157,6 +213,48 @@ public class ListSuite {
                 Tuple.of("B", List.of("A")), list.pop2());
     }
 
+    //pop sobre una lista vacia
+    @Test(expected = NoSuchElementException.class)
+    public void popWithEmpty(){
+        List<Integer> l1 = List.of();
+        List<Integer> l2 = l1.pop();
+        assertEquals(l2,empty());
+    }
+    @Test
+    public void popWithEmptyOption(){
+        List<Integer> l1 = List.of();
+        Option<List<Integer>> l2 = l1.popOption();
+        assertEquals(l2,Option.none());
+    }
+
+    //comparacion pop y tail
+    @Test
+    public void popAndTail(){
+        List<Integer> l1 = List.of(1,2,3,4);
+        assertEquals(l1.tail(),l1.pop());
+        assertEquals(l1.tailOption(),l1.popOption());
+    }
+
+    //pop2 - devuelve una tupla con el primer elemento, y otro con todos los elementos
+    @Test
+    public void pop2WithLargerList(){
+        List<Integer> l1 = List.of(1,2,3,4,5,6);
+        Tuple2<Integer,List<Integer>> l2 = l1.pop2();
+        System.out.println(l2);
+
+        assertEquals(l2._1.intValue(),1);
+        assertEquals(l2._2,List.of(2,3,4,5,6));
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void pop2OnEmptyList(){
+        List<Integer> l1 = List.of();
+
+        Tuple2<Integer, List<Integer>>  l2 = l1.pop2();
+
+    }
+
+
     /**
      * Una lista de vavr se comporta como una pila ya que guarda y
      * retorna sus elementos como LIFO.
@@ -191,17 +289,75 @@ public class ListSuite {
     /**
      * Validar dos listas con la funcion Takewhile con los predicados el elemento menor a ocho y el elemento mayor a dos
      */
+
+    //aplica hasta que no se cumpla la condicion del takeWhile
     @Test
     public void testListToTakeWhile() {
+
         List<Integer> myList = List.ofAll(4, 6, 8, 5);
         List<Integer> myListOne = List.ofAll(2, 4, 3);
+
         List<Integer> myListRes = myList.takeWhile(j -> j < 8);
         List<Integer> myListResOne = myListOne.takeWhile(j -> j > 2);
+
+        //la lista tiene valores menores a 8  nonEmpty - no esta vacia
         assertTrue("List with values less than eight", myListRes.nonEmpty());
+
+        //hay dos valores en la lista
         assertEquals("List with length of two", 2, myListRes.length());
+
+        //lista con ultimo valor igual a 6
         assertEquals("List with last value six", new Integer(6), myListRes.last());
+
         assertTrue("List with values greater than two", myListResOne.isEmpty());
     }
+
+
+    @Test
+    public void testFold(){
+        List<Integer> l1 = List.of(1,2,3,4,5);
+        //Fold a apartir del cero - sumatoria
+        Integer r = l1.fold(0,(acc,el)->acc+el);
+        assertEquals(r.intValue(),15);
+    }
+
+    @Test
+    public void testFoldLeftResta(){
+        List<Integer> l1 = List.of(1,2,3,4,5);
+        //Fold a apartir del cero - sumatoria
+        Integer r = l1.foldLeft(0,(acc,el)->acc-el);
+        System.out.printf("left "+r);
+        assertEquals(r.intValue(),-15);
+    }
+
+    //se parte desde el cero
+    @Test
+    public void testFoldRightResta(){
+        List<Integer> l1 = List.of(1,2,3,4,5);
+        //Fold a apartir del cero - sumatoria
+        Integer r = l1.foldRight(0,(el,acc)->acc-el);
+        System.out.printf("Right "+r);
+        assertEquals(r.intValue(),-15);
+    }
+    @Test
+    public void testFoldLeftString(){
+        List<String> l1 = List.of("A","B");
+        //Fold a apartir del cero - o union
+        String r = l1.foldLeft("",(acc,el)->acc+el);
+        System.out.println("left String"+r);
+        assertEquals(r,"AB");
+    }
+
+    //se parte desde el cero
+    @Test
+    public void testFoldRightString(){
+        List<String> l1 = List.of("A","B");
+        //Fold a apartir del cero - o union
+        String r = l1.foldRight("",(el,acc)->acc+el);
+        System.out.println("Righit String "+r);
+        assertEquals(r,"BA");
+    }
+
 
     /**
      * Se puede separar una lista en ventanas de un tamaño especifico
