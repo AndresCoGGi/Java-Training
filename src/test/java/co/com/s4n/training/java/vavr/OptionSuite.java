@@ -251,16 +251,16 @@ public class OptionSuite {
         assertEquals(resultado.getOrElse(""),"ac");
     }
 
-    @Test
+    /*@Test
     public void flatMapInOptionEjercicioListas(){
 
-        List<String> list = new ArrayList<>();
+        io.vavr.collection.List<String> list = io.vavr.collection.List.of();
 
         Option<List<String>> resultado =
                 classEjercicio.añadirAlista(list,"pedro")
-                        .flatMap(a -> classEjercicio.añadirAlista(a,"Camilo")
+                        .flatMap(a -> classEjercicio.añadirAlista(io.vavr.collection.List.of(a),"Camilo")
                         );
 
-        //assertEquals(resultado.getOrElse(""),"ac");
-    }
+        assertEquals(resultado,List.of("pedro","Camilo"));
+    }*/
 }
