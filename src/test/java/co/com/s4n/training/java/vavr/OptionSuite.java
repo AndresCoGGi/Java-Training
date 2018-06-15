@@ -293,7 +293,7 @@ public class OptionSuite {
     @Test
     public void forCompEnOption2(){
         Option<Integer> integers = For(esPar(2), d ->
-                                   For(esPar(4), c -> Option(d+c))).toOption();
+                                       For(esPar(4), c -> Option(d+c))).toOption();
         assertEquals(integers,Some(6));
     }
 
