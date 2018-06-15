@@ -1,5 +1,6 @@
 package co.com.s4n.training.java.vavr;
 
+import co.com.s4n.training.java.classEjercicio;
 import org.junit.Test;
 
 
@@ -11,11 +12,13 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import java.util.ArrayList;
 
+
 import static io.vavr.API.*;
 import static io.vavr.Patterns.$None;
 import static io.vavr.Patterns.$Some;
 
 import java.util.List;
+
 import java.util.Optional;
 
 import static io.vavr.API.Some;
@@ -222,5 +225,42 @@ public class OptionSuite {
         Option<Integer> integers = For(esPar(2), d ->
                                    For(esPar(4), c -> Option(d+c))).toOption();
         assertEquals(integers,Some(6));
+    }
+
+    @Test
+    public void flatMapInOptionEjercicioFor(){
+        Option<String> resultado =
+                For(classEjercicio.convertirMayus("andres"),r1 ->
+                        For(classEjercicio.obtenerPrimeraLetra(r1),r2 ->
+                                For(classEjercicio.filtro(r2,25),r3 ->
+                                        classEjercicio.convertirMinusyjuntar(r3,"c")))).toOption();
+
+        assertEquals(resultado.getOrElse(""),"ac");
+    }
+
+
+    @Test
+    public void flatMapInOptionEjercicio(){
+        Option<String> resultado =
+                classEjercicio.convertirMayus("andres")
+                        .flatMap(a -> classEjercicio.obtenerPrimeraLetra(a)
+                                .flatMap(d -> classEjercicio.filtro(d,25) )
+                                      .flatMap(b -> classEjercicio.convertirMinusyjuntar(b,"c")
+                                       ));
+
+        assertEquals(resultado.getOrElse(""),"ac");
+    }
+
+    @Test
+    public void flatMapInOptionEjercicioListas(){
+
+        List<String> list = new ArrayList<>();
+
+        Option<List<String>> resultado =
+                classEjercicio.añadirAlista(list,"pedro")
+                        .flatMap(a -> classEjercicio.añadirAlista(a,"Camilo")
+                        );
+
+        //assertEquals(resultado.getOrElse(""),"ac");
     }
 }
