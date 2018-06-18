@@ -21,6 +21,9 @@ import static io.vavr.Predicates.instanceOf;
 import static io.vavr.Patterns.*;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
+
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import static io.vavr.API.*;
 import static org.junit.Assert.assertNotEquals;
@@ -35,10 +38,12 @@ public class FutureSuite {
     // Max wait time for results = WAIT_MILLIS * WAIT_COUNT (however, most probably it will take only WAIT_MILLIS * 1)
     private static final long WAIT_MILLIS = 50;
     private static final int WAIT_COUNT = 100;
+    //se puede llamar 100 veces - sleep durante 50 milisegundos
     private static void waitUntil(Supplier<Boolean> condition) {
         int count = 0;
         while (!condition.get()) {
             if (++count > WAIT_COUNT) {
+                //condicion no cumplida
                 fail("Condition not met.");
             } else {
                 Try.run(() -> Thread.sleep(WAIT_MILLIS));
@@ -51,7 +56,10 @@ public class FutureSuite {
      */
     @Test(expected = Error.class)
     public void testFutureWithError() {
-        Future<String> future = Future.of(() -> {throw new Error("Failure");});
+        Future<String> future = Future.of(() -> {
+            throw new Error("Failure");
+        });
+        //no hacerle get a un Futuro excepto si es condigo de pruebas
         future.get();
     }
 
@@ -61,19 +69,54 @@ public class FutureSuite {
     @Test
     public void testOnCompleteSuccess() {
         Future<String[]> futureSplit = Future.of(() -> "TEXT_TO_SPLIT".split("_"));
+        //la lambda del onComplete se realiza cuando se ejecuta el hilo asi sea bien o mal
+        //se realizan las modificaciones al futuro sin capturarlo en una variable
+        //res valor del futuro -> un try del resultado
         futureSplit.onComplete(res -> {
+            System.out.println("res "+res.get());
+            //si el res tiene valor -> pregunta isSucces al try -> el get es del Try- ya que es Success
             if (res.isSuccess()) {
                 for (int i = 0; i < res.get().length; i++) {
+                    //covertimos en minusculas
                     res.get()[i] = res.get()[i].toLowerCase();
                 }
             }
         });
+        //bloquea el hilo principal hasta que el futuro termine
         futureSplit.await();
         String[] expected = {"text", "to", "split"};
         //Wait until we are sure that the second thread (onComplete) is done.
+        //espera hasta que se acabe el hilo que esta en el onComplete
         waitUntil(() -> futureSplit.get()[2].equals("split"));
         assertArrayEquals("The arrays are different", expected, futureSplit.get());
     }
+
+
+   @Test
+   public void testOnCompleteSuccess2() {
+       Future<String[]> futureSplit = Future.of(() -> "TEXT_TO_SPLIT".split("_"));
+       //la lambda del onComplete se realiza cuando se ejecuta el hilo asi sea bien o mal
+       //se realizan las modificaciones al futuro sin capturarlo en una variable
+       //res valor del futuro -> un try del resultado
+       futureSplit.onComplete(res -> {
+           System.out.println("res "+res.get());
+           //si el res tiene valor(arreglo de elementos) -> pregunta isSucces al try -> el get es del Try- ya que es Success
+           if (res.isSuccess()) {
+               for (int i = 0; i < res.get().length; i++) {
+                   //covertimos en minusculas
+                   res.get()[i] = res.get()[i].toLowerCase();
+               }
+           }
+       });
+       //bloquea el hilo principal hasta que el futuro termine - pero no se si la lambda ya termino.
+       futureSplit.await();
+       String[] expected = {"text", "to", "split"};
+       //Wait until we are sure that the second thread (onComplete) is done.
+       //espera hasta que se acabe el hilo que esta en el onComplete
+       //esepra hasta que se complete el hilo principal y hasta que se cumpla la condicion
+       waitUntil(() -> futureSplit.get()[2].equals("split"));
+       assertArrayEquals("The arrays are different", expected, futureSplit.get());
+   }
 
     /**
      *Valida la funcion de find aplicando un predicado que viene de una implementacion de la clase Iterable que contenga Futuros
@@ -81,11 +124,14 @@ public class FutureSuite {
      */
     @Test
     public void testFutureToFind() {
+        //lista de vavr con un futuro de Integer
         List<Future<Integer>> myLista = List.of( Future.of(() -> 5+4), Future.of(() -> 6+9), Future.of(() -> 31+1),Future.of(() -> 20+9));
 
+        //los primeros que cumplan la condicion
         Future<Option<Integer>> futureSome = Future.find(myLista, v -> v < 10);
         Future<Option<Integer>> futureSomeM = Future.find(myLista, v -> v > 31);
         Future<Option<Integer>> futureNone = Future.find(myLista, v -> v > 40);
+
         assertEquals("Valide find in the List with Future", Some(9), futureSome.get());
         assertEquals("Valide find in the List with Future", Some(32), futureSomeM.get());
         assertEquals("Valide find in the List with Future", None(), futureNone.get());
@@ -107,16 +153,27 @@ public class FutureSuite {
      */
     @Test
     public void testFutureToOnFails() {
+        //final para asignarle valor luego
         final String[] valor = {"default","pedro"};
+
         Consumer<Object> funcion = element -> {
             valor[1] = "fallo";
         };
-        Future<Object> myFuture = Future.of(() -> {throw new Error("No implemented");});
+
+        Future<Object> myFuture = Future.of(() -> {
+            throw new Error("No implemented");
+        });
+
+        //hace algo cuando un futuro falla
         myFuture.onFailure(funcion);
         assertEquals("Validete Onfailure in Future", "pedro",valor[1]);
+        //bloquea el hilo principal, pero no se si ya acabo el consumer
         myFuture.await();
+
         assertTrue("Validete Onfailure in Future",myFuture.isFailure());
+
         waitUntil(() -> valor[1].toString()=="fallo");
+
         assertEquals("Validete Onfailure in Future", "fallo",valor[1]);
     }
 
@@ -126,10 +183,75 @@ public class FutureSuite {
      */
     @Test
     public void testFutureToMap() {
-        Future<Integer> myMap = Future.of( () -> "pedro").map(v -> v.length());
-        Future<Integer> myFlatMap = Future.of( () ->Future.of(() -> 5+9)).flatMap(v -> Future.of(()->v.await().getOrElse(15)));
+        Future<Integer> myMap = Future.of( () -> "pedro")
+                //se ejecuta en un hilo de la misma caja del futuro
+                .map(v -> v.length());
         assertEquals("validate map with future",new Integer(5),myMap.get());
+    }
+
+    @Test
+    public void testFutureToFlatMap() {
+
+        Future<Integer> myFlatMap = Future
+                .of( () ->Future.of(() -> 5+9))
+                //v.await -> hasta que se complete el fututo - bloquea el hilo
+                .flatMap(v -> Future.of(()->v.await().getOrElse(15)));
+
         assertEquals("validate map with future",new Integer(14),myFlatMap.get());
+    }
+
+    public Future<String> convertirMayus(String nombre){
+        String nombreMayus;
+        nombreMayus = nombre.toUpperCase();
+        System.out.println("nombre es "+nombreMayus);
+        return Future.of(() -> nombreMayus);
+    }
+
+    public Future<String> obtenerPrimeraLetra(String name){
+        char primerachar = name.charAt(0);
+        String primera = Character.toString(primerachar);
+        System.out.println("Primera letra "+primera);
+        return Future.of(() ->primera);
+    }
+
+    public Future<String> convertirMinusyjuntar(String letra,String letra2){
+        String letraMinus = letra.toLowerCase()+letra2;
+        System.out.println("Letra Minuscula "+letraMinus);
+        return Future.of(() ->letraMinus);
+    }
+
+    public static Future<String> filtro(String letra, int edad){
+        System.out.println("Edad "+edad);
+        return edad>24 ? Future.of(() -> letra) : Future.of(() -> {throw new Error("No implemented");});
+
+    }
+
+
+    @Test
+    public void futureEjercicio(){
+            Future<String> resultado =
+                    convertirMayus("andres")
+                            .flatMap(a -> obtenerPrimeraLetra(a)
+                                    .flatMap(d -> filtro(d,25)
+                                        .flatMap(b -> convertirMinusyjuntar(b,"c")
+                                    )));
+            resultado.await();
+            System.out.printf("resultado ejercicio "+resultado.get());
+            assertEquals(resultado.get(),"ac");
+    }
+
+    //hilos ¿¿¿???
+    @Test
+    public void futureEjercicioFallo(){
+        Future<String> resultado =
+                convertirMayus("andres")
+                        .flatMap(a -> obtenerPrimeraLetra(a)
+                                .flatMap(d -> filtro(d,23)
+                                        .flatMap(b -> convertirMinusyjuntar(b,"c")
+                                        )));
+
+        resultado.await();
+        assertTrue(resultado.isFailure());
     }
 
     /**
@@ -137,14 +259,128 @@ public class FutureSuite {
      */
     @Test
     public void testFutureToForEach() {
+        //listas de JAVA
         java.util.List<Integer> results = new ArrayList<>();
         java.util.List<Integer> compare = Arrays.asList(9,15,32,29);
+
         List<Future<Integer>> myLista = List.of(Future.of(() -> 5 + 4), Future.of(() -> 6 + 9), Future.of(() -> 31 + 1), Future.of(() -> 20 + 9));
+
+        //recorremos la lista
         myLista.forEach(v -> {
             results.add(v.get());
         });
         assertEquals("Validate Foreach in Future", compare, results);
     }
+
+    @Test
+    public void forEachInFuture(){
+        final String[] result = {"666"};
+        Future<String> f1 = Future.of(() -> "1");
+        f1.forEach(i -> result[0]=i);
+        f1.await();
+        //assertEquals(f1.get(),"1");
+
+        //espera a que el hilo principal se ejecute y se cumpla
+        waitUntil(() -> "1".equals(result[0]));
+        assertEquals("1",result[0]);
+    }
+
+    @Test
+    public void testOnComplete() {
+        Future<String> futureSplit = Future.of(() -> "Hello!");
+
+        Future<String> onComplete = futureSplit.onComplete(res -> {
+            System.out.printf("Hello!");
+        });
+        futureSplit.await();
+        assertEquals(futureSplit.get(),onComplete.get());
+        assertSame("Failure - onComplete did not return the same future", futureSplit, onComplete);
+    }
+
+    @Test
+    public void FoldOnFuture(){
+        //El fold no se le puede aplicar a una instancia ya que es estatico
+
+        Future<String> f1 =  Future.of(() ->  "1");
+        Future<String> f2 =  Future.of(() ->  "2");
+        Future<String> f3 =  Future.of(() ->  "3");
+
+
+        Future<String> f4 =  Future
+                .fold(List.of(f1,f2,f3),"",(x,y) -> x+y);
+
+        assertEquals(f4.await().get(),"123");
+
+    }
+
+    @Test
+    public void FoldOnFutureFail(){
+        //El fold no se le puede aplicar a una instancia ya que es estatico
+
+        Future<String> f1 =  Future.of(() ->  "1");
+        Future<String> f2 =  Future.of(() ->  {throw new Error("No implemented");});
+        Future<String> f3 =  Future.of(() ->  "3");
+
+
+        //si falla un elemento de la lista, falla el resto
+        Future<String> f4 =  Future
+                .fold(List.of(f1,f2,f3),"",(x,y) -> x+y);
+
+        f4.await();
+        //assertEquals(f4.await().get(),"123");
+        assertTrue(f4.isFailure());
+
+    }
+
+    @Test
+    public void FoldEqualsFlatMap(){
+        //El fold no se le puede aplicar a una instancia ya que es estatico
+
+        Future<String> f1 =  Future.of(() ->  "1");
+        Future<String> f2 =  Future.of(() ->  "2");
+        Future<String> f3 =  Future.of(() ->  "3");
+
+
+        Future<String> f4 =  Future
+                .fold(List.of(f1,f2,f3),"",(x,y) -> x+y);
+
+
+        Future<String> resFlatMap = f1.flatMap(a -> f2.flatMap(b -> {
+            String p = a+b;
+            return f3.flatMap(c -> Future.of(() -> p +c));
+        }));
+
+        assertEquals(resFlatMap.await().get(),resFlatMap.await().get());
+
+
+    }
+
+    /*public Future<String> myFold(List<Future<String>> futures, String zero, BiFunction<String, String, String> b){
+
+        List<String> entrada = futures
+
+
+        Integer r = l1.fold(0,(acc,el)->acc+el);
+
+
+
+        return Future.of(() -> "");
+    }
+
+    @Test
+    public void TestMyFold(){
+        //El fold no se le puede aplicar a una instancia ya que es estatico
+
+        Future<String> f1 =  Future.of(() ->  "1");
+        Future<String> f2 =  Future.of(() ->  "2");
+        Future<String> f3 =  Future.of(() ->  "3");
+
+        Future<String> resutado = myFold(List.of(f1,f2,f3),"",(x,y) -> x+y);
+
+
+    }*/
+
+
 
     /**
      * Se puede crear un future utilizando funciones lambda
@@ -353,26 +589,100 @@ public class FutureSuite {
      */
     @Test
     public void testFutureRecover() {
+        //arreglos vacios
         final String[] thread1 = {""};
         final String[] thread2 = {""};
+
         Future<Integer> aFuture = Future.of(
                 () -> {
                     Thread.sleep(1000);
+                    System.out.println("testFutureRecover (1) "+Thread.currentThread().getName());
                     thread1[0] = Thread.currentThread().getName().toString();
                     return 2/0;
                 }
         );
+        //Math(it).of  ->> la excepcion que venga cambiela por cualquier cosa
         Future<Integer> aRecover = aFuture.recover(it -> Match(it).of(
                 Case($(),() -> {
+                    System.out.println("testFutureRecover (2) "+Thread.currentThread().getName());
                     thread2[0] = Thread.currentThread().getName().toString();
                     return 2;
                 })
         ));
+
         aRecover.await();
         assertTrue("Failure - The future wasn't a success",aRecover.isSuccess());
         assertFalse("Failure - The threads should be different",thread1[0].equals(thread2[0]));
         assertEquals("Failure - It's not two",new Integer(2),aRecover.get());
     }
+
+    @Test
+    public void testFutureRecove2() {
+
+        ExecutorService ex = Executors.newFixedThreadPool(1);
+        //arreglos vacios
+        final String[] thread1 = {""};
+        final String[] thread2 = {""};
+
+
+
+        Future<Integer> aFuture = Future.of(ex,
+                () -> {
+                    Thread.sleep(1000);
+                    System.out.println("testFutureRecover2 (1) "+Thread.currentThread().getName());
+                    thread1[0] = Thread.currentThread().getName().toString();
+                    return 2/0;
+                }
+        );
+        //Math(it).of  ->> la excepcion que venga cambiela por cualquier cosa
+        Future<Integer> aRecover = aFuture.recover(it -> Match(it).of(
+                Case($(),() -> {
+                    System.out.println("testFutureRecover2 (2) "+Thread.currentThread().getName());
+                    thread2[0] = Thread.currentThread().getName().toString();
+                    return 2;
+                })
+        ));
+
+        aRecover.await();
+        assertTrue("Failure - The future wasn't a success",aRecover.isSuccess());
+        assertTrue("Failure - The threads should be different",thread1[0].equals(thread2[0]));
+        assertEquals("Failure - It's not two",new Integer(2),aRecover.get());
+    }
+
+
+    @Test
+    public void testFutureRecove3() {
+
+        ExecutorService ex = Executors.newFixedThreadPool(1);
+        //arreglos vacios
+        final String[] thread1 = {""};
+        final String[] thread2 = {""};
+
+
+
+        Future<Integer> aFuture = Future.of(ex,
+                () -> {
+                    Thread.sleep(1000);
+                    System.out.println("testFutureRecover3 (1) "+Thread.currentThread().getName());
+                    thread1[0] = Thread.currentThread().getName().toString();
+                    return 2/0;
+                }
+        );
+        //Math(it).of  ->> la excepcion que venga cambiela por cualquier cosa
+        Future<Integer> aRecover = aFuture.recover(it -> Match(it).of(
+                Case($(),() -> {
+                    System.out.println("testFutureRecover3 (2) "+Thread.currentThread().getName());
+                    thread2[0] = Thread.currentThread().getName().toString();
+                    return 2/0;
+                })
+        ));
+
+        aRecover.await();
+        assertFalse("Failure - The future wasn't a success",aRecover.isSuccess());
+        //assertTrue("Failure - The threads should be different",thread1[0].equals(thread2[0]));
+        //assertEquals("Failure - It's not two",new Integer(2),aRecover.get());
+    }
+
 
     /**
      *  El Recover me sirve para recuperar futuros que hayan fallado, y se recupera el futuro con otro
