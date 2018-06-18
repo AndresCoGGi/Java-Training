@@ -1,6 +1,7 @@
 package co.com.s4n.training.java.vavr;
 
 import io.vavr.Function1;
+import io.vavr.Lazy;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Stream;
@@ -822,4 +823,40 @@ public class FutureSuite {
         assertEquals("Failure - Validate Future with Promise",new Integer(15),myFutureOne.get());
         assertFalse("Failure - Validate myFuture is not complete",myFuture.isCompleted());
     }
+
+    @Test
+    public void EjercicioFuture(){
+        Future<String> f1 = Future.of(()->{
+            Thread.sleep(500);
+            return "Andres";
+        });
+        Future<String> f2 = Future.of(()->{
+            Thread.sleep(800);
+            return "Correa";
+        });
+        Future<String> f3 = Future.of(()->{
+            Thread.sleep(300);
+            return "Giraldo";
+        });
+
+        long inicio = System.nanoTime();
+
+        Future<String> result =
+                f1.flatMap(s -> f2.flatMap(s2 -> {
+                    String r1 = s+s2;
+                    return f3.flatMap(s3 -> Future.of(() -> r1+s3));
+                }));
+
+        result.await().get();
+
+        long fin = System.nanoTime();
+        Double elapsed = (fin-inicio)*Math.pow(10 ,- 6);
+        System.out.printf("Diferencia "+elapsed);
+    }
+
+
+
+
+
+
 }
