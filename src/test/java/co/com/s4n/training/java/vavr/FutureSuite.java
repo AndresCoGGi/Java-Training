@@ -512,4 +512,7 @@ public class FutureSuite {
         assertEquals("Failure - Validate Future with Promise",new Integer(15),myFutureOne.get());
         assertFalse("Failure - Validate myFuture is not complete",myFuture.isCompleted());
     }
+
+
+
 }
