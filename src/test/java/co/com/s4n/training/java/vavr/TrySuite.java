@@ -29,6 +29,9 @@ public class TrySuite {
         Try<Integer> myTrySuccess = Try.of(() -> 15 / 5 );
         Try<Integer> myTryFailure = Try.of(() -> 15 / 0 );
 
+
+
+        //el resultado lo envuelve en un Success
         assertEquals("failed - the values is a Failure",
                 Success(3),
                 myTrySuccess);
@@ -61,6 +64,8 @@ public class TrySuite {
                 patternMyTry(myTryFailure));
     }
 
+
+    //recover - recuperar de failure
     private Try<Integer> recoverMyTry(Integer a, Integer b) {
         return Try.of(() -> a / b).recover(x -> Match(x).of(
                 Case($(instanceOf(Exception.class)), -1)));
@@ -116,6 +121,26 @@ public class TrySuite {
         assertEquals("Failure - it should transform the number to text",
                 "5 example of text",
                 transform);
+    }
+
+    @Test
+    public void testSuccessTransform2() {
+        Try<Integer> number = Try.of(() -> 5);
+        Try<Integer> transform = number.transform(self -> self);
+
+        assertEquals("Failure - it should transform the number to text",
+                Success(5),
+                transform);
+    }
+
+    @Test
+    public void testingMap(){
+        Try<Integer> nombre = Try.of(() -> "AC")
+                .map(n -> n.length());
+
+        assertEquals(Success(2),nombre);
+
+
     }
 
     /**
@@ -355,6 +380,65 @@ public class TrySuite {
         };
         Try<Integer> aTry = Try.of(() -> 2).mapTry(checkedFunction1);
         assertEquals("Failed the checkedFuntion", Success(1),aTry);
+    }
+
+    private Try<Integer> sumar(Integer a, Integer b){
+        return Try.of(()->a+b);
+    }
+
+    private Try<Integer> dividir(Integer a, Integer b){
+        return Try.of(()->a/b);
+    }
+
+    private Try<Integer> divideWithRecoverwith(Integer a, Integer b){
+        return Try.of(()->a/b).recoverWith(ArithmeticException.class,Try.of(()->-1));
+    }
+
+
+    @Test
+    public void testMonadicCompositionWithFlatMap(){
+        Try<Integer> res =
+                sumar(1,2)
+                        .flatMap(r0 -> sumar(r0,r0)
+                            .flatMap(r1 -> sumar(r1,-6)
+                                .flatMap(r2 -> dividir(r2,r2)
+                        )));
+        assertTrue(res.isFailure());
+    }
+
+    @Test
+    public void testMonadicCompositionWithFlatMapFor(){
+        Try<Integer> res =
+                For(sumar(1,2) ,s1 ->
+                        For(sumar(s1,s1) , s2 ->
+                                For(sumar(s2,-6),s3 ->
+                                        dividir(s3,s3)))).toTry();
+
+        assertTrue(res.isFailure());
+    }
+
+    @Test
+    public void testMonadicCompositionWithFlatMap2(){
+        Try<Integer> res =
+                sumar(1,2)
+                        .flatMap(r0 -> sumar(r0,r0)
+                                .flatMap(r1 -> sumar(r1,-6)
+                                        .flatMap(r2 -> dividir(r2,r2).recoverWith(ArithmeticException.class,Try.of(() ->  -1))
+                                        )));
+        assertTrue(res.isSuccess());
+        //assertTrue(res.isFailure());
+    }
+
+    @Test
+    public void testMonadicCompositionWithFlatMap3(){
+        Try<Integer> res =
+                sumar(1,2)
+                        .flatMap(r0 -> sumar(r0,r0)
+                                .flatMap(r1 -> sumar(r1,-6)
+                                        .flatMap(r2 -> divideWithRecoverwith(r2,r2)
+                                        )));
+        assertTrue(res.isSuccess());
+        //assertTrue(res.isFailure());
     }
 
 }
