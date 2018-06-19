@@ -62,6 +62,7 @@ public class ListSuite {
 
     /**
      * Una Lista es inmutable
+     * osea no cambia de categoria
      */
     @Test
     public void testListIsImmutable() {
