@@ -1,5 +1,6 @@
 package co.com.s4n.training.java.vavr;
 
+import co.com.s4n.training.java.classEjercicio;
 import org.junit.Test;
 
 
@@ -11,11 +12,13 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import java.util.ArrayList;
 
+
 import static io.vavr.API.*;
 import static io.vavr.Patterns.$None;
 import static io.vavr.Patterns.$Some;
 
 import java.util.List;
+
 import java.util.Optional;
 
 import static io.vavr.API.Some;
@@ -297,66 +300,41 @@ public class OptionSuite {
         assertEquals(integers,Some(6));
     }
 
-    private Option<Integer> sumar(int a, int b){
-        System.out.println("Sumando "+a+"+"+b);
-        return Option.of(a+b);
-    }
+    @Test
+    public void flatMapInOptionEjercicioFor(){
+        Option<String> resultado =
+                For(classEjercicio.convertirMayus("andres"),r1 ->
+                        For(classEjercicio.obtenerPrimeraLetra(r1),r2 ->
+                                For(classEjercicio.filtro(r2,25),r3 ->
+                                        classEjercicio.convertirMinusyjuntar(r3,"c")))).toOption();
 
-    private Option<Integer> restar(int a, int b){
-        System.out.println("Restando "+a+"-"+b);
-        return a-b>0 ? Option.of(a-b) : None();
+        assertEquals(resultado.getOrElse(""),"ac");
     }
 
 
     @Test
-    public void flatMapInOption(){
-        Option<Integer> resultado =
-           sumar(1,1)
-                   .flatMap(a -> sumar(a,1)
-                      .flatMap(b -> sumar(b,1)
-                            .flatMap(c -> sumar(c,1)
-                                .flatMap(d -> sumar(d,1))
-                            )));
-           assertEquals(resultado.getOrElse(666).intValue(),6);
+    public void flatMapInOptionEjercicio(){
+        Option<String> resultado =
+                classEjercicio.convertirMayus("andres")
+                        .flatMap(a -> classEjercicio.obtenerPrimeraLetra(a)
+                                .flatMap(d -> classEjercicio.filtro(d,25) )
+                                      .flatMap(b -> classEjercicio.convertirMinusyjuntar(b,"c")
+                                       ));
+
+        assertEquals(resultado.getOrElse(""),"ac");
     }
 
-    @Test
-    public void flatMapInOptionConNone(){
-        Option<Integer> resultado =
-                sumar(1,1)
-                        .flatMap(a -> sumar(a,1)
-                                .flatMap(b -> restar(b,4)
-                                        // el option devuelve none y none con flatMap da none,
-                                        // no ejecuta la lambda que sigue
-                                        .flatMap(c -> sumar(c,1)
-                                                .flatMap(d -> sumar(d,1))
-                                        )));
-        assertEquals(resultado.getOrElse(666).intValue(),666);
-    }
+    /*@Test
+    public void flatMapInOptionEjercicioListas(){
 
-    @Test
-    public void flatMapInOptionConFor(){
+        io.vavr.collection.List<String> list = io.vavr.collection.List.of();
 
-        Option<Integer> res =
-            For(sumar(1,1),r1 ->
-                    For(sumar(r1,1),r2 ->
-                            For(sumar(r2,1),r3 ->
+        Option<List<String>> resultado =
+                classEjercicio.añadirAlista(list,"pedro")
+                        .flatMap(a -> classEjercicio.añadirAlista(io.vavr.collection.List.of(a),"Camilo")
+                        );
 
-              sumar(r3,r1)))).toOption();
-
-        assertEquals(res.getOrElse(666).intValue(),6);
-
-
-        /*Option<Integer> resultado =
-                sumar(1,1)
-                        .flatMap(a -> sumar(a,1)
-                                .flatMap(b -> restar(b,4)
-                                        // el option devuelve none y none con flatMap da none,
-                                        // no ejecuta la lambda que sigue
-                                        .flatMap(c -> sumar(c,1)
-                                                .flatMap(d -> sumar(d,1))
-                                        )));
-        assertEquals(resultado.getOrElse(666).intValue(),666);*/
-    }
+        assertEquals(resultado,List.of("pedro","Camilo"));
+    }*/
 
 }
