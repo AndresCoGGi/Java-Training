@@ -2,25 +2,23 @@ package co.com.s4n.training.java.vavr;
 
 import io.vavr.Function1;
 import io.vavr.control.Either;
-import org.junit.Test;
-
-import static io.vavr.API.Left;
-import static io.vavr.API.None;
-import static io.vavr.API.Right;
-
-import java.util.function.Consumer;
-import java.io.Serializable;
-
-import static io.vavr.Patterns.$Some;
-import static org.junit.Assert.assertArrayEquals;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
+
+import java.io.Serializable;
+import java.util.function.Consumer;
+
 import static io.vavr.API.*;
 import static io.vavr.Patterns.$Left;
 import static io.vavr.Patterns.$Right;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.*;
+
+@RunWith(JUnitPlatform.class)
+
 
 public class EitherSuite {
 
@@ -31,10 +29,10 @@ public class EitherSuite {
     public void swapToEither() {
         Either<Integer,String> myEitherR = Either.right("String");
         Either<Integer,String> myEitherL = Either.left(14);
-        assertTrue("Valide swap before in Either Right", myEitherR.isRight());
-        assertTrue("Valide swap after in Either Right", myEitherR.swap().isLeft());
-        assertTrue("Valide swap before in Either Left", myEitherL.isLeft());
-        assertTrue("Valide swap after in Either Right", myEitherL.swap().isRight());
+        assertTrue(myEitherR.isRight(),"Valide swap before in Either Right");
+        assertTrue(myEitherR.swap().isLeft(),"Valide swap after in Either Right");
+        assertTrue(myEitherL.isLeft(),"Valide swap before in Either Left");
+        assertTrue(myEitherL.swap().isRight(),"Valide swap after in Either Right");
 
         assertFalse(myEitherR.isLeft());
         assertFalse(myEitherR.swap().isRight());
@@ -55,10 +53,10 @@ public class EitherSuite {
         Either<Integer,Integer> e2 = Either.left(5);
 
         //El Either por defecto cuando se usa el map opera con el lado derecho.
-        assertEquals("Failure - Right projection", Right(10), e1.map(it -> it + 5));
+        assertEquals(Right(10), e1.map(it -> it + 5));
 
         //El Either para operar el lado izquierdo se debe usar un mapLeft.
-        assertEquals("Failure - Left Projection", Left(10), e2.mapLeft(it -> it + 5));
+        assertEquals(Left(10), e2.mapLeft(it -> it + 5));
     }
 
 
@@ -70,15 +68,15 @@ public class EitherSuite {
     public void testEitherMap() {
         Either<String,Double> value = Either.right( 2.0 / 3);
 
-        assertEquals("Failure - Map in Right",
+        assertEquals(
                 Right(4.0),
-                value.map(aDouble -> aDouble * 6));
+                value.map(aDouble -> aDouble * 6),"Failure - Map in Right");
 
         Either<String,Double> value2 = Either.left("Left side");
 
-        assertEquals("Failure - the Either is not left",
+        assertEquals(
                 Left("Left side"),
-                value2.map(aDouble -> aDouble * 6));
+                value2.map(aDouble -> aDouble * 6),"Failure - the Either is not left");
 
     }
 
@@ -91,15 +89,15 @@ public class EitherSuite {
 
         Either<String,Double> e1 = Either.right( 2.0 / 3);
 
-        assertEquals("Failure - flatMap in Right",
+        assertEquals(
                 Right(4.0),
-                e1.flatMap(aDouble -> Right(aDouble * 6)));
+                e1.flatMap(aDouble -> Right(aDouble * 6)),"Failure - flatMap in Right");
 
         Either<String,Double> e2 = Either.left("Left side");
 
-        assertEquals("Failure - the Either is not left",
+        assertEquals(
                 Left("Left side"),
-                e2.flatMap(aDouble -> Right(aDouble * 6)));
+                e2.flatMap(aDouble -> Right(aDouble * 6)),"Failure - the Either is not left");
 
     }
 
@@ -132,9 +130,9 @@ public class EitherSuite {
 
         Either<String,Integer> value = Either.right(7);
 
-        assertEquals("value is even",
+        assertEquals(
                 None(),
-                value.filter(it -> it % 2 == 0));
+                value.filter(it -> it % 2 == 0),"value is even");
     }
 
     @Test
@@ -142,18 +140,22 @@ public class EitherSuite {
 
         Either<String,Integer> value = Either.right(6);
 
-        assertEquals("value is even",
+        assertEquals(
                 Some(Right(6)),
-                value.filter(it -> it % 2 == 0));
+                value.filter(it -> it % 2 == 0),"value is even");
     }
 
     /**
      * Si el predicado del filter tiene un null, el void lanzara un Nullpointerexception
      */
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testEitherFilter2() {
         Either<String,Integer> value = Either.right(7);
-        value.filter(null);
+        assertThrows( NullPointerException.class,()->{
+            value.filter(null);
+        });
+
+
     }
 
     /**
@@ -172,8 +174,8 @@ public class EitherSuite {
         Either<String,Integer> value = Either.right(5);
         Either<String,Integer> value2 = Either.left("this is some");
 
-        assertEquals("Failure map in right", Either.right(20),biMap.apply(value));
-        assertEquals("Failure map in left", Either.left("this the left"),biMap.apply(value2));
+        assertEquals(Either.right(20),biMap.apply(value),"Failure map in right");
+        assertEquals(Either.left("this the left"),biMap.apply(value2),"Failure map in left");
     }
 
     /**
@@ -274,10 +276,11 @@ public class EitherSuite {
     public void testNarrow(){
         Either<Integer, String> either = Try.of(()-> "0").toEither(0);
         Either<Object, Object> copy = Either.narrow(either);
-        assertEquals("Failure - the result of narrows must be equals to the source",either,copy);
-        assertSame("Failure - Although the narrowed and the source have a different type specification, they must be the same object",
+        assertEquals(either,copy,"Failure - the result of narrows must be equals to the source");
+        assertSame(
                 either,
-                copy);
+                copy,
+                "Failure - Although the narrowed and the source have a different type specification, they must be the same object");
     }
 
     /**

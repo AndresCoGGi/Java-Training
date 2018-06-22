@@ -1,17 +1,22 @@
 package co.com.s4n.training.java.jdk;
 
-import static org.junit.Assert.*;
-
-import co.com.s4n.training.java.*;
-import org.junit.Ignore;
-import org.junit.Test;
+import co.com.s4n.training.java.CollectablePerson;
+import co.com.s4n.training.java.MyClass;
+import co.com.s4n.training.java.MyClassWithInt;
+import co.com.s4n.training.java.PersonCollector;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@RunWith(JUnitPlatform.class)
 
 public class StreamsSuite {
     @Test
@@ -111,7 +116,9 @@ public class StreamsSuite {
                 .average();
 
         //precision de 0D
-        assertEquals(5D,average.orElseGet(()->666),0D);
+        //assertEquals(5D,average.orElseGet(()->666),0D);
+
+        assertEquals(5D,average.orElseGet(() ->666),0D);
 
     }
 
@@ -283,7 +290,7 @@ public class StreamsSuite {
         assertTrue(collect.contains("A2"));
     }
 
-    @Test(expected = java.lang.IllegalStateException.class)
+    @Test
     public void testStreams14() {
         Stream<String> stream =
                 Stream.of("d2", "a2", "b1", "b3", "c")
@@ -295,7 +302,10 @@ public class StreamsSuite {
         //si devuelve String se puede seguir operando el stream
         //el anymatch es un operacion final
         //Un stream no se puede volver a usar despues de haberse ejecutado una operacion final sobre el :(
-        stream.noneMatch(s -> true);
+        assertThrows(java.lang.IllegalStateException.class,() ->{
+            stream.noneMatch(s -> true);
+        });
+
     }
 
     @Test

@@ -2,9 +2,14 @@ package co.com.s4n.training.java.vavr;
 
 import co.com.s4n.training.java.classEjercicioTry;
 import io.vavr.control.Try;
-import org.junit.Test;
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@RunWith(JUnitPlatform.class)
 
 public class TrySuiteEjercicio {
 

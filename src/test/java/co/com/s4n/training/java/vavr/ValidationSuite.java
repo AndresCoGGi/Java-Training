@@ -1,19 +1,25 @@
 package co.com.s4n.training.java.vavr;
 
+import io.vavr.Function1;
 import io.vavr.collection.CharSeq;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
-import io.vavr.control.Validation;
-import org.junit.Test;
-import io.vavr.Function1;
 import io.vavr.control.Option;
+import io.vavr.control.Validation;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import static org.junit.Assert.assertTrue;
+@RunWith(JUnitPlatform.class)
+
 
 public class ValidationSuite
 {
@@ -80,7 +86,7 @@ public class ValidationSuite
 
         MyClass myClass = res.get();
 
-        assertTrue("ap should be valid",res.isValid());
+        assertTrue(res.isValid());
         assertEquals("La edad debe ser 15 en la clase instanciada ", myClass.age, "15");
 
     }
@@ -90,7 +96,7 @@ public class ValidationSuite
      * y sin embargo todas las funciones se deben ejecutar.
      */
 
-    @Test(expected = java.util.NoSuchElementException.class)
+    @Test
     public void testValidation2() {
 
         Validation<Seq<String>, MyClass> res=  Validation
@@ -102,10 +108,13 @@ public class ValidationSuite
         // en este caso esto lanza una excepción. Esto significa que el accesor get sobre un Validation es INSEGURO!
 
         //.get es inseguro porque no sabe si es valide o invalide
-        MyClass myClass = res.get();
+        assertThrows(java.util.NoSuchElementException.class,()->{
+            MyClass myClass = res.get();
+        });
+
         //como da un invalid, arroja una excepcion
 
-        assertTrue("ap should be invalid",res.isInvalid());
+        assertTrue(res.isInvalid());
     }
 
     public void testValidation3() {
@@ -117,7 +126,7 @@ public class ValidationSuite
 
         Integer fold = res.fold(s -> 1, c -> 2);
 
-        assertTrue("ap should be invalid",res.isInvalid());
+        assertTrue(res.isInvalid());
         assertEquals(fold.intValue(), 1);
     }
 
@@ -223,7 +232,7 @@ public class ValidationSuite
                 .matches(EMAIL_REGEX)
                 ? Validation.valid(email)
                 : Validation.invalid("Email contains invalid characters");
-        assertTrue("The validator failed", validateEmail.isValid());
+        assertTrue(validateEmail.isValid());
     }
 
     /**
@@ -245,7 +254,7 @@ public class ValidationSuite
 
         //500  esta por fuera de rango
 
-        assertTrue("The validator was successful", validateBound.isInvalid());
+        assertTrue(validateBound.isInvalid());
     }
 
     /**
@@ -315,7 +324,7 @@ public class ValidationSuite
 
         //opera sobre la lista de validation
         validation.forEach(consumer);
-        assertEquals("Failure- Was not operated",
+        assertEquals(
                 Arrays.asList("Operacion 0","Operacion 1","Operacion 2"),msg);
     }
 
@@ -379,13 +388,13 @@ public class ValidationSuite
             }
         };
 
-        assertEquals("Failure - return some invalid",
+        assertEquals(
                 Validation.valid("18 this is part of flatmap"),
-                validatorValid.flatMap(s -> Validation.valid(s + " this is part of flatmap")));
+                validatorValid.flatMap(s -> Validation.valid(s + " this is part of flatmap")),"Failure - return some invalid");
 
-        assertEquals("Failure - someone is younger",
+        assertEquals(
                 Validation.valid("he is an adult"),
-                validatorValid.flatMap(s -> ageValidator.apply(s)));
+                validatorValid.flatMap(s -> ageValidator.apply(s)),"Failure - someone is younger");
 
         assertEquals("Failure - the flatmap is Valid",
                 Validation.invalid(new Error("Alert!")).toString(),
